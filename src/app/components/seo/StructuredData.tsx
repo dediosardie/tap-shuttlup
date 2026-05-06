@@ -10,7 +10,7 @@ export function SiteStructuredData() {
       {
         "@type": "SoftwareApplication",
         "@id": `${BASE_URL}/#software`,
-        name: "Shutt'L Up",
+        name: "ShuttlUp",
         alternateName: "Shutt'L Up  VMMS",
         applicationCategory: "BusinessApplication",
         operatingSystem: "Web",
@@ -43,7 +43,7 @@ export function SiteStructuredData() {
       {
         "@type": "Organization",
         "@id": `${BASE_URL}/#organization`,
-        name: "Shutt'L Up",
+        name: "ShuttlUp",
         alternateName: "Shutt'L Up ",
         url: BASE_URL,
         logo: {
@@ -74,7 +74,7 @@ export function SiteStructuredData() {
         "@type": "WebSite",
         "@id": `${BASE_URL}/#website`,
         url: BASE_URL,
-        name: "Shutt'L Up",
+        name: "ShuttlUp",
         publisher: { "@id": `${BASE_URL}/#organization` },
         potentialAction: {
           "@type": "SearchAction",
@@ -180,7 +180,7 @@ export function ArticleStructuredData({
     publisher: {
       "@type": "Organization",
       "@id": `${BASE_URL}/#organization`,
-      name: "Shutt'L Up",
+      name: "ShuttlUp",
       logo: {
         "@type": "ImageObject",
         url: `${BASE_URL}/icon-512.png`,
@@ -205,7 +205,7 @@ export function LocalBusinessStructuredData() {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     "@id": `${BASE_URL}/#localbusiness`,
-    name: "Shutt'L Up",
+    name: "ShuttlUp",
     url: BASE_URL,
     image: `${BASE_URL}/og-image.png`,
     description:

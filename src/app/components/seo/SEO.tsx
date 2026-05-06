@@ -14,7 +14,7 @@ interface SEOProps {
 
 const BASE_URL = "https://shuttlup.com";
 const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.png`;
-const SITE_NAME = "Shutt'L Up";
+const SITE_NAME = "ShuttlUp";
 const TWITTER_HANDLE = "@shuttlup";
 
 export function SEO({

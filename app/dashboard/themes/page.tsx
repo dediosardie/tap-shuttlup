@@ -15,7 +15,7 @@ const themePresets = [
   {
     id: "obsidian",
     label: "Obsidian Orange",
-    description: "Default dark theme with vibrant orange accent — the signature Shutt'L Up look.",
+    description: "Default dark theme with vibrant orange accent — the signature ShuttlUp look.",
     preview: ["#0b0b0b", "#1a1a1a", "#f97316"],
   },
   {

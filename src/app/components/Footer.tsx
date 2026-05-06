@@ -88,7 +88,7 @@ export function Footer() {
 
         <div className="border-t border-border-muted/70 pt-8 text-sm text-text-disabled lg:col-span-4">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p>&copy; 2026 Shutt'L Up. All rights reserved.</p>
+            <p>&copy; 2026 ShuttlUp. All rights reserved.</p>
             <div className="flex items-center gap-6">
               <Link to="/" className="transition-colors hover:text-accent-color">Shutt'L Up Tap</Link>
               <Link to="/tap/demo" className="transition-colors hover:text-accent-color">Demo Profile</Link>
