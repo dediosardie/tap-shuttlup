@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { getProfileByShortcode } from "@/lib/mock-data";
+import { getPublicProfileByShortcode } from "@/lib/public-profile-server";
 import { parseUserAgent } from "@/lib/analytics";
-
-export const runtime = "edge";
 
 export async function GET(request: Request, { params }: { params: Promise<{ shortcode: string }> }) {
   const { shortcode } = await params;
@@ -10,7 +8,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ shor
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  const profile = getProfileByShortcode(shortcode);
+  const profile = await getPublicProfileByShortcode(shortcode);
 
   if (!profile) {
     return NextResponse.redirect(new URL("/", request.url));

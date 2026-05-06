@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getDemoProfile } from "@/lib/mock-data";
+import { getPublicProfileByUsername } from "@/lib/public-profile-server";
 import { buildVCard } from "@/lib/vcard";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
-  const profile = getDemoProfile(username);
+  const profile = await getPublicProfileByUsername(username);
 
   if (!profile) {
     return new NextResponse("Profile not found", { status: 404 });

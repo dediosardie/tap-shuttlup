@@ -1,12 +1,12 @@
-import { notFound } from "next/navigation";
-import { getDemoProfile } from "@/lib/mock-data";
+import { notFound, redirect } from "next/navigation";
+import { getPublicProfileByUsername } from "@/lib/public-profile-server";
 import { absoluteUrl } from "@/lib/utils";
 import type { Metadata } from "next";
 import { BadgeCheck, Download, QrCode, Wifi } from "lucide-react";
 
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
   const { username } = await params;
-  const profile = getDemoProfile(username);
+  const profile = await getPublicProfileByUsername(username);
   if (!profile) return {};
   return {
     title: `${profile.full_name} QR Code`,
@@ -17,8 +17,11 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
 
 export default async function QrProfilePage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
-  const profile = getDemoProfile(username);
+  const profile = await getPublicProfileByUsername(username);
   if (!profile) notFound();
+  if (profile.username !== username) {
+    redirect(`/qr/${profile.username}`);
+  }
 
   const profileUrl = `https://tap.shuttlup.com/${profile.username}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&color=F97316&bgcolor=121212&data=${encodeURIComponent(profileUrl)}`;
