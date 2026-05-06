@@ -56,7 +56,7 @@ export function QrPage() {
 
   if (!profile) return null;
 
-  const profileUrl = `https://tap.shuttlup.com/${profile.username}`;
+  const profileUrl = `https://tap.shuttlup.com/${profile.username}?src=qr`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&color=F97316&bgcolor=121212&data=${encodeURIComponent(profileUrl)}`;
 
   return (

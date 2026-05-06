@@ -1,6 +1,8 @@
 import type { PublicProfile } from "@/lib/types";
 import { getViteSupabaseClient } from "@/lib/supabase";
 
+type AccessSource = "tap" | "qr" | "direct";
+
 type ProfileRow = {
   id: string;
   username: string;
@@ -122,4 +124,97 @@ export async function getAuthedUsername(): Promise<string | null> {
     .maybeSingle();
 
   return data?.username ?? null;
+}
+
+async function insertAnalyticsEvent(cardId: string, source: AccessSource): Promise<void> {
+  const db = getViteSupabaseClient();
+  if (!db) return;
+
+  await db.from("tap_analytics").insert({
+    card_id: cardId,
+    device: /mobile/i.test(navigator.userAgent) ? "mobile" : "desktop",
+    browser: /chrome/i.test(navigator.userAgent)
+      ? "Chrome"
+      : /safari/i.test(navigator.userAgent)
+        ? "Safari"
+        : /firefox/i.test(navigator.userAgent)
+          ? "Firefox"
+          : "Other",
+    os: /windows/i.test(navigator.userAgent)
+      ? "Windows"
+      : /android/i.test(navigator.userAgent)
+        ? "Android"
+        : /iphone|ios/i.test(navigator.userAgent)
+          ? "iOS"
+          : /mac/i.test(navigator.userAgent)
+            ? "macOS"
+            : "Other",
+    referrer: source,
+  });
+}
+
+async function incrementTapCount(cardId: string, tapCount: number): Promise<void> {
+  const db = getViteSupabaseClient();
+  if (!db) return;
+  await db.from("nfc_cards").update({ tap_count: tapCount + 1 }).eq("id", cardId);
+}
+
+export async function recordShortcodeAccess(shortcode: string, source: AccessSource): Promise<void> {
+  const db = getViteSupabaseClient();
+  if (!db) return;
+
+  const normalized = shortcode.trim();
+  if (!normalized) return;
+
+  const { data: card } = await db
+    .from("nfc_cards")
+    .select("id, is_active, tap_count")
+    .ilike("shortcode", normalized)
+    .limit(1)
+    .maybeSingle();
+
+  if (!card || !card.is_active) return;
+
+  await insertAnalyticsEvent(card.id as string, source);
+  await incrementTapCount(card.id as string, (card.tap_count as number | null) ?? 0);
+}
+
+export async function recordUsernameAccess(username: string, source: AccessSource): Promise<void> {
+  const db = getViteSupabaseClient();
+  if (!db) return;
+
+  const { data: profile } = await db
+    .from("profiles")
+    .select("id")
+    .ilike("username", username)
+    .limit(1)
+    .maybeSingle();
+
+  if (!profile?.id) return;
+
+  const { data: activeCard } = await db
+    .from("nfc_cards")
+    .select("id, tap_count")
+    .eq("profile_id", profile.id)
+    .eq("is_active", true)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let resolvedCard = activeCard as { id: string; tap_count: number | null } | null;
+  if (!resolvedCard) {
+    const { data: latestCard } = await db
+      .from("nfc_cards")
+      .select("id, tap_count")
+      .eq("profile_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    resolvedCard = latestCard as { id: string; tap_count: number | null } | null;
+  }
+
+  if (!resolvedCard) return;
+
+  await insertAnalyticsEvent(resolvedCard.id, source);
+  await incrementTapCount(resolvedCard.id, resolvedCard.tap_count ?? 0);
 }

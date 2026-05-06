@@ -68,6 +68,77 @@ npm run build
 ## Supabase
 Run migration:
 - supabase/migrations/202605060001_shuttlup_tap_init.sql
+- supabase/migrations/202605070001_add_mode_type_to_nfc_cards.sql
+
+## Verification Procedure (NFC + QR Analytics)
+
+Use this checklist after config or routing changes.
+
+1. Restart the Vite dev server.
+
+```bash
+# stop existing dev server, then run again
+npm run dev
+```
+
+2. Ensure Supabase env vars are set for the running surface.
+
+```env
+# Vite-compatible keys
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
+
+# also supported in this repo
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
+
+3. Create or confirm a card from /dashboard/cards.
+- Use a known shortcode, for example: NFC-001
+- Keep it active
+- Copy the generated tap URL
+
+4. Write the NFC tag as a URI record with the exact value:
+
+```text
+https://tap.shuttlup.com/t/NFC-001
+```
+
+5. Test NFC tap behavior.
+- Tap/scan the physical NFC tag
+- Expected: redirect to /[username]
+- If you see "shortcode not found", verify the row exists and is active in nfc_cards
+
+6. Test QR behavior.
+- Open /qr/[username]
+- Scan the QR code
+- Expected: open /[username]?src=qr
+
+7. Verify analytics rows are written.
+
+```sql
+-- latest events for your profile cards
+select a.id, a.referrer, a.device, a.city, a.created_at
+from public.tap_analytics a
+join public.nfc_cards c on c.id = a.card_id
+join public.profiles p on p.id = c.profile_id
+where lower(p.username) = lower('YOUR_USERNAME')
+order by a.created_at desc
+limit 20;
+```
+
+8. Verify tap_count increments.
+
+```sql
+select id, shortcode, is_active, tap_count, mode_type
+from public.nfc_cards
+where lower(shortcode) = lower('NFC-001');
+```
+
+Expected referrer values:
+- NFC tap redirect: tap
+- QR scan: qr
+- direct profile access: direct (or browser referrer string)
 
 ## Notes
 - Existing Vite-era files remain in src as legacy and are excluded from new TS build scope.
@@ -117,12 +188,12 @@ Use the card dashboard:
 - Actions:
   - Copy tap URL for sharing/testing
   - Activate/Deactivate a card
-  - Create NFC Card (UI action scaffolded)
-  - Generate QR (UI action scaffolded)
+  - Create NFC Card
+  - Generate QR
 
 Current behavior:
-- Card list is currently mock/demo data in the UI.
-- In production, connect this page to your cards table and update APIs.
+- Card CRUD is connected to Supabase.
+- Ensure migrations are applied and environment variables are present.
 
 ### 4. How End Users Save Contact Info
 

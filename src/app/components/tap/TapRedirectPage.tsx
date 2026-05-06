@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { Wifi } from "lucide-react";
-import { getPublicProfileByShortcode } from "@/lib/public-profile";
+import { getPublicProfileByShortcode, recordShortcodeAccess } from "@/lib/public-profile";
 
 export function TapRedirectPage() {
   const { shortcode = "" } = useParams<{ shortcode: string }>();
@@ -19,7 +19,8 @@ export function TapRedirectPage() {
       if (!active) return;
 
       if (profile) {
-        navigate(`/${profile.username}`, { replace: true });
+        await recordShortcodeAccess(normalizedShortcode, "tap");
+        navigate(`/${profile.username}?src=tap`, { replace: true });
       } else {
         setStatus("not-found");
       }

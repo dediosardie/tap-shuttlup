@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, useLocation } from "react-router";
 import { Helmet } from "react-helmet-async";
 import { PublicProfileView } from "@/app/components/tap/PublicProfileView";
 import type { PublicProfile } from "@/lib/types";
-import { getAuthedUsername, getPublicProfileByUsername } from "@/lib/public-profile";
+import { getAuthedUsername, getPublicProfileByUsername, recordUsernameAccess } from "@/lib/public-profile";
 
 export function ProfilePage() {
   const { username = "" } = useParams<{ username: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -26,6 +27,12 @@ export function ProfilePage() {
           return;
         }
         setProfile(resolved);
+        const src = new URLSearchParams(location.search).get("src");
+        if (src === "qr") {
+          await recordUsernameAccess(resolved.username, "qr");
+        } else if (src !== "tap") {
+          await recordUsernameAccess(resolved.username, "direct");
+        }
         setLoading(false);
         return;
       }
@@ -44,7 +51,7 @@ export function ProfilePage() {
     return () => {
       active = false;
     };
-  }, [navigate, username]);
+  }, [location.search, navigate, username]);
 
   if (loading) {
     return (
