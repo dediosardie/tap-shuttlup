@@ -21,8 +21,15 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
   };
 }
 
-export default async function PublicProfilePage({ params }: { params: Promise<{ username: string }> }) {
+export default async function PublicProfilePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ username: string }>;
+  searchParams: Promise<{ src?: string }>;
+}) {
   const { username } = await params;
+  const { src } = await searchParams;
   const profile = await getPublicProfileByUsername(username);
 
   if (profile && profile.username !== username) {
@@ -38,7 +45,7 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
   }
 
   const requestHeaders = await headers();
-  await recordUsernameAccess(profile.username, "direct", requestHeaders);
+  await recordUsernameAccess(profile.username, src === "qr" ? "qr" : "direct", requestHeaders);
 
   return <PublicProfileView profile={profile} />;
 }

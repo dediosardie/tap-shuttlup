@@ -167,7 +167,7 @@ export async function recordUsernameAccess(username: string, source: AccessSourc
 
   if (!profile?.id) return;
 
-  const { data: card } = await supabase
+  const { data: activeCard } = await supabase
     .from("nfc_cards")
     .select("id, profile_id, is_active, tap_count")
     .eq("profile_id", profile.id)
@@ -176,7 +176,18 @@ export async function recordUsernameAccess(username: string, source: AccessSourc
     .limit(1)
     .maybeSingle();
 
-  const resolvedCard = card as CardRow | null;
+  let resolvedCard = activeCard as CardRow | null;
+  if (!resolvedCard) {
+    const { data: latestCard } = await supabase
+      .from("nfc_cards")
+      .select("id, profile_id, is_active, tap_count")
+      .eq("profile_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    resolvedCard = latestCard as CardRow | null;
+  }
+
   if (!resolvedCard) return;
 
   await insertAnalyticsEvent(resolvedCard.id, source, requestHeaders);
