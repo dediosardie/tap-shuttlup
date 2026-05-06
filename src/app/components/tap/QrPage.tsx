@@ -1,13 +1,60 @@
-import { useParams, Navigate, Link } from "react-router";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate, Link } from "react-router";
 import { Helmet } from "react-helmet-async";
 import { BadgeCheck, Download, QrCode, Wifi } from "lucide-react";
-import { getDemoProfile } from "@/lib/mock-data";
+import type { PublicProfile } from "@/lib/types";
+import { getAuthedUsername, getPublicProfileByUsername } from "@/lib/public-profile";
 
 export function QrPage() {
   const { username = "" } = useParams<{ username: string }>();
-  const profile = getDemoProfile(username);
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState<PublicProfile | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!profile) return <Navigate to="/404" replace />;
+  useEffect(() => {
+    let active = true;
+
+    async function load() {
+      setLoading(true);
+      const resolved = await getPublicProfileByUsername(username);
+
+      if (!active) return;
+
+      if (resolved) {
+        if (resolved.username !== username) {
+          navigate(`/qr/${resolved.username}`, { replace: true });
+          return;
+        }
+        setProfile(resolved);
+        setLoading(false);
+        return;
+      }
+
+      const authedUsername = await getAuthedUsername();
+      if (!active) return;
+
+      if (authedUsername && authedUsername !== username) {
+        navigate(`/qr/${authedUsername}`, { replace: true });
+      } else {
+        navigate("/404", { replace: true });
+      }
+    }
+
+    void load();
+    return () => {
+      active = false;
+    };
+  }, [navigate, username]);
+
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[var(--bg-primary)]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--accent-color)] border-t-transparent" />
+      </main>
+    );
+  }
+
+  if (!profile) return null;
 
   const profileUrl = `https://tap.shuttlup.com/${profile.username}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&color=F97316&bgcolor=121212&data=${encodeURIComponent(profileUrl)}`;

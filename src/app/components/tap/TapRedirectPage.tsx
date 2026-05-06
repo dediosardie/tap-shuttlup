@@ -1,20 +1,36 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { Wifi } from "lucide-react";
-import { getProfileByShortcode } from "@/lib/mock-data";
+import { getPublicProfileByShortcode } from "@/lib/public-profile";
 
 export function TapRedirectPage() {
   const { shortcode = "" } = useParams<{ shortcode: string }>();
   const navigate = useNavigate();
-  const profile = getProfileByShortcode(shortcode);
+  const [status, setStatus] = useState<"loading" | "not-found">("loading");
 
   useEffect(() => {
-    if (profile) {
-      navigate(`/${profile.username}`, { replace: true });
-    }
-  }, [profile, navigate]);
+    let active = true;
 
-  if (!profile) {
+    async function resolveShortcode() {
+      setStatus("loading");
+      const profile = await getPublicProfileByShortcode(shortcode);
+
+      if (!active) return;
+
+      if (profile) {
+        navigate(`/${profile.username}`, { replace: true });
+      } else {
+        setStatus("not-found");
+      }
+    }
+
+    void resolveShortcode();
+    return () => {
+      active = false;
+    };
+  }, [shortcode, navigate]);
+
+  if (status === "not-found") {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 text-center px-4">
         <p className="text-sm text-[var(--text-muted)]">
