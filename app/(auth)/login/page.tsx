@@ -123,7 +123,7 @@ export default function LoginPage() {
           Welcome back
         </h1>
         <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
-          Sign in to your ShuttlUp Tap account
+          Sign in to your Shutt'L Up Tap account
         </p>
       </div>
 

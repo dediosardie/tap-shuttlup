@@ -13,6 +13,10 @@ import { DashboardProfilePage } from "./components/dashboard/DashboardProfilePag
 import { DashboardModesPage } from "./components/dashboard/DashboardModesPage";
 import { DashboardThemesPage } from "./components/dashboard/DashboardThemesPage";
 import { DashboardSettingsPage } from "./components/dashboard/DashboardSettingsPage";
+import { LoginPage } from "./components/auth/LoginPage";
+import { RegisterPage } from "./components/auth/RegisterPage";
+import { ForgotPasswordPage } from "./components/auth/ForgotPasswordPage";
+import { OnboardingPage } from "./components/auth/OnboardingPage";
 
 export const router = createBrowserRouter([
   // Marketing site (with Navbar / Footer)
@@ -25,6 +29,13 @@ export const router = createBrowserRouter([
       { path: "*", Component: NotFound },
     ],
   },
+
+  // Auth routes — must be before the /:username catch-all
+  { path: "/login",           Component: LoginPage },
+  { path: "/auth/sign-in",    Component: LoginPage },
+  { path: "/register",        Component: RegisterPage },
+  { path: "/forgot-password", Component: ForgotPasswordPage },
+  { path: "/onboarding",      Component: OnboardingPage },
 
   // NFC shortcode redirect  →  /t/:shortcode
   { path: "/t/:shortcode", Component: TapRedirectPage },

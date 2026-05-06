@@ -280,7 +280,7 @@ function StepProfile({
           Tell the world about you
         </h2>
         <p className="mt-1 text-sm" style={{ color: "var(--text-muted)" }}>
-          This appears on your public ShuttlUp Tap card.
+          This appears on your public Shutt'L Up Tap card.
         </p>
       </div>
 
@@ -299,7 +299,7 @@ function StepProfile({
       <Field label="Company / Organization">
         <div className="relative">
           <Input
-            placeholder="ShuttlUp Transport Inc."
+            placeholder="Shutt'L Up Transport Inc."
             className="pl-10"
             value={data.company}
             onChange={(e) => onChange({ company: e.target.value })}
@@ -580,7 +580,7 @@ function StepReady({
           NFC Setup Instructions
         </p>
         <ol className="list-inside list-decimal space-y-1">
-          <li>Order your ShuttlUp NFC card from the dashboard.</li>
+          <li>Order your Shutt'L Up NFC card from the dashboard.</li>
           <li>Tap your card to an NFC-enabled phone to test.</li>
           <li>Share the QR code above for instant access.</li>
         </ol>

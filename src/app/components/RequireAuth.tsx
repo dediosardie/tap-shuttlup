@@ -36,7 +36,7 @@ export function RequireAuth() {
   }
 
   if (status === "unauthed") {
-    return <Navigate to="/auth/sign-in" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <Outlet />;

@@ -94,7 +94,7 @@ export default function HomePage() {
               </div>
               <div>
                 <p className="font-semibold text-[var(--text-primary)]">Ardie Cruz</p>
-                <p className="text-xs text-[var(--text-muted)]">Fleet Innovation Lead · ShuttlUp Tap</p>
+                <p className="text-xs text-[var(--text-muted)]">Fleet Innovation Lead · Shutt'L Up Tap</p>
                 <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-[10px] text-[var(--accent-color)]">
                   <BadgeCheck className="h-3 w-3" /> Fleet Verified
                 </span>
@@ -139,7 +139,7 @@ export default function HomePage() {
               Everything your team needs
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-[var(--text-muted)]">
-              ShuttlUp Tap is a fully integrated NFC identity module built on the ShuttlUp platform.
+              Shutt'L Up Tap is a fully integrated NFC identity module built on the Shutt'L Up platform.
             </p>
           </div>
 
