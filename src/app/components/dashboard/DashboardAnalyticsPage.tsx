@@ -16,7 +16,7 @@ export function DashboardAnalyticsPage() {
   const [form, setForm] = useState<{ source: "nfc" | "qr" | "direct"; city: string; device: string; referrer: string }>({ source: "nfc", city: "", device: "", referrer: "" });
 
   useEffect(() => {
-    setEvents(readAnalytics());
+    void readAnalytics().then(setEvents);
   }, []);
 
   const monthStats = useMemo(() => {
@@ -44,23 +44,23 @@ export function DashboardAnalyticsPage() {
       .sort((a, b) => b.taps - a.taps);
   }, [events]);
 
-  function handleCreate() {
+  async function handleCreate() {
     if (!form.city || !form.device) {
       return;
     }
-    const created = createAnalyticsEvent(form);
+    const created = await createAnalyticsEvent(form);
     setEvents((prev) => [created, ...prev]);
     setForm({ source: "nfc", city: "", device: "", referrer: "" });
   }
 
-  function handleUpdate(event: AnalyticsEvent, patch: Partial<AnalyticsEvent>) {
+  async function handleUpdate(event: AnalyticsEvent, patch: Partial<AnalyticsEvent>) {
     const next = { ...event, ...patch };
-    updateAnalyticsEvent(next);
+    await updateAnalyticsEvent(next);
     setEvents((prev) => prev.map((e) => (e.id === next.id ? next : e)));
   }
 
-  function handleDelete(id: string) {
-    deleteAnalyticsEvent(id);
+  async function handleDelete(id: string) {
+    await deleteAnalyticsEvent(id);
     setEvents((prev) => prev.filter((e) => e.id !== id));
   }
 

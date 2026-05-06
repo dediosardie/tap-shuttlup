@@ -54,22 +54,22 @@ export function DashboardThemesPage() {
   const [newTheme, setNewTheme] = useState({ label: "", theme_key: "custom", layout: "spacious" as DashboardTheme["layout"] });
 
   useEffect(() => {
-    setThemes(readThemes());
+    void readThemes().then(setThemes);
   }, []);
 
   const selected = themes.find((t) => t.is_active);
 
-  function setActive(theme: DashboardTheme) {
+  async function setActive(theme: DashboardTheme) {
     const next = { ...theme, is_active: true };
-    updateTheme(next);
+    await updateTheme(next);
     setThemes((prev) => prev.map((t) => ({ ...t, is_active: t.id === theme.id })));
   }
 
-  function createNewTheme() {
+  async function createNewTheme() {
     if (!newTheme.label.trim()) {
       return;
     }
-    const created = createTheme({
+    const created = await createTheme({
       label: newTheme.label.trim(),
       theme_key: newTheme.theme_key.trim() || "custom",
       layout: newTheme.layout,
@@ -79,14 +79,14 @@ export function DashboardThemesPage() {
     setNewTheme({ label: "", theme_key: "custom", layout: "spacious" });
   }
 
-  function updateInline(theme: DashboardTheme, patch: Partial<DashboardTheme>) {
+  async function updateInline(theme: DashboardTheme, patch: Partial<DashboardTheme>) {
     const next = { ...theme, ...patch };
-    updateTheme(next);
+    await updateTheme(next);
     setThemes((prev) => prev.map((t) => (t.id === theme.id ? next : t)));
   }
 
-  function remove(id: string) {
-    deleteTheme(id);
+  async function remove(id: string) {
+    await deleteTheme(id);
     setThemes((prev) => prev.filter((t) => t.id !== id));
   }
 

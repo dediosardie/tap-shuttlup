@@ -11,16 +11,16 @@ export function DashboardCardsPage() {
   const [form, setForm] = useState({ uid: "", shortcode: "", mode: "fleet" as ModeType });
 
   useEffect(() => {
-    setCards(readCards());
+    void readCards().then(setCards);
   }, []);
 
   function persist(next: DashboardCard[]) {
     setCards(next);
   }
 
-  function toggleStatus(card: DashboardCard) {
+  async function toggleStatus(card: DashboardCard) {
     const next: DashboardCard = { ...card, status: card.status === "active" ? "inactive" : "active" };
-    updateCard(next);
+    await updateCard(next);
     persist(cards.map((c) => (c.id === card.id ? next : c)));
   }
 
@@ -30,11 +30,11 @@ export function DashboardCardsPage() {
     setTimeout(() => setCopiedUid(null), 2000);
   }
 
-  function handleCreate() {
+  async function handleCreate() {
     if (!form.uid || !form.shortcode) {
       return;
     }
-    const created = createCard({
+    const created = await createCard({
       uid: form.uid,
       shortcode: form.shortcode,
       mode: form.mode,
@@ -44,14 +44,14 @@ export function DashboardCardsPage() {
     setForm({ uid: "", shortcode: "", mode: "fleet" });
   }
 
-  function handleDelete(id: string) {
-    deleteCard(id);
+  async function handleDelete(id: string) {
+    await deleteCard(id);
     persist(cards.filter((c) => c.id !== id));
   }
 
-  function handleInlineUpdate(card: DashboardCard, patch: Partial<DashboardCard>) {
+  async function handleInlineUpdate(card: DashboardCard, patch: Partial<DashboardCard>) {
     const next = { ...card, ...patch };
-    updateCard(next);
+    await updateCard(next);
     persist(cards.map((c) => (c.id === card.id ? next : c)));
   }
 

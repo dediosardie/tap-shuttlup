@@ -14,20 +14,20 @@ export function DashboardProfilePage() {
   const [profile, setProfile] = useState<DashboardProfile | null>(null);
 
   useEffect(() => {
-    setProfile(readProfile());
+    void readProfile().then(setProfile);
   }, []);
 
-  function handleSave() {
+  async function handleSave() {
     if (!profile) {
       return;
     }
-    updateProfile(profile);
+    await updateProfile(profile);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   }
 
-  function handleCreate() {
-    const created = createProfile({
+  async function handleCreate() {
+    const created = await createProfile({
       username: "new-profile",
       full_name: "New User",
       position: "Title",
@@ -43,8 +43,8 @@ export function DashboardProfilePage() {
     setProfile(created);
   }
 
-  function handleDelete() {
-    deleteProfile();
+  async function handleDelete() {
+    await deleteProfile();
     setProfile(null);
   }
 
