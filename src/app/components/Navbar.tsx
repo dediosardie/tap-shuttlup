@@ -55,7 +55,7 @@ export function Navbar() {
 
         <div className="flex items-center gap-2">
           <a
-            href="https://tap.shuttlup.com/"
+            href="/login"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden rounded-full border border-border-muted px-4 py-2 text-sm text-text-secondary transition-all hover:bg-accent-soft hover:text-text-primary lg:inline-flex"
