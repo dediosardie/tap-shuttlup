@@ -3,7 +3,7 @@ import { AppProviders } from "@/components/providers/app-providers";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://tap-shuttlup.vercel.app/"),
+  metadataBase: new URL("https://tap.shuttlup.com/"),
   title: {
     default: "Shutt'L Up Tap",
     template: "%s | Shutt'L Up Tap",
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Shutt'L Up Tap",
     description: "NFC-powered digital business card platform.",
-    url: "https://tap-shuttlup.vercel.app/",
+    url: "https://tap.shuttlup.com/",
     siteName: "Shutt'L Up Tap",
     type: "website",
   },

@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     data: {
       ...parsed.data,
       shortcode,
-      tap_url: `https://tap-shuttlup.vercel.app/t/${shortcode}`,
+      tap_url: `https://tap.shuttlup.com/t/${shortcode}`,
     },
   });
 }
