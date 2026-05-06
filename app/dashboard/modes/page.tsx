@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { DashboardShell } from "../../../components/dashboard/dashboard-shell";
 import { BadgeCheck, Briefcase, Car, Pencil, Plus, Trash2, TrendingUp, Users, User2 } from "lucide-react";
-import { createMode, deleteMode, readModes, updateMode, type DashboardMode } from "../../../lib/dashboard-crud";
+import { createMode, deleteMode, readModes, updateMode, type DashboardMode } from "@/lib/dashboard-crud";
 import type { ModeType } from "../../../lib/types";
 
 const modeMeta: Record<ModeType, { icon: React.ElementType; color: string; border: string; description: string }> = {
@@ -46,34 +46,34 @@ export default function DashboardModesPage() {
   const [newModeType, setNewModeType] = useState<ModeType>("fleet");
 
   useEffect(() => {
-    setModes(readModes());
+    void readModes().then(setModes);
   }, []);
 
   const selected = modes.find((m) => m.is_default)?.mode_type ?? "fleet";
 
-  function handleCreate() {
+  async function handleCreate() {
     if (!newModeName.trim()) {
       return;
     }
-    const created = createMode({ mode_name: newModeName.trim(), mode_type: newModeType, is_default: false });
+    const created = await createMode({ mode_name: newModeName.trim(), mode_type: newModeType, is_default: false });
     setModes((prev) => [created, ...prev]);
     setNewModeName("");
   }
 
-  function setDefault(mode: DashboardMode) {
+  async function setDefault(mode: DashboardMode) {
     const next = { ...mode, is_default: true };
-    updateMode(next);
+    await updateMode(next);
     setModes((prev) => prev.map((m) => ({ ...m, is_default: m.id === mode.id })));
   }
 
-  function updateInline(mode: DashboardMode, patch: Partial<DashboardMode>) {
+  async function updateInline(mode: DashboardMode, patch: Partial<DashboardMode>) {
     const next = { ...mode, ...patch };
-    updateMode(next);
+    await updateMode(next);
     setModes((prev) => prev.map((m) => (m.id === mode.id ? next : m)));
   }
 
-  function remove(modeId: string) {
-    deleteMode(modeId);
+  async function remove(modeId: string) {
+    await deleteMode(modeId);
     setModes((prev) => prev.filter((m) => m.id !== modeId));
   }
 

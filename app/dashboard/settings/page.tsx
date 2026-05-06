@@ -9,7 +9,7 @@ import {
   readSettings,
   updateSettings,
   type DashboardSettings,
-} from "../../../lib/dashboard-crud";
+} from "@/lib/dashboard-crud";
 
 function ToggleRow({
   label,

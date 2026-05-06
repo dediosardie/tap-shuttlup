@@ -1,5 +1,5 @@
 import type { ModeType } from "@/lib/types";
-import { demoProfiles } from "@/lib/mock-data";
+import { getSupabaseBrowserClient } from "@/lib/supabase-client";
 
 export type DashboardProfile = {
   id: string;
@@ -67,55 +67,20 @@ type DashboardState = {
   analytics: AnalyticsEvent[];
 };
 
-const STORAGE_KEY = "shuttlup.dashboard.crud.v1";
+const STORAGE_KEY = "shuttlup.dashboard.crud.v2";
 
-function uid() {
+function genId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 function initialState(): DashboardState {
-  const base = demoProfiles[0];
-
   return {
-    profile: {
-      id: base.id,
-      username: base.username,
-      full_name: base.full_name,
-      position: base.position,
-      company: base.company,
-      bio: base.bio,
-      avatar_url: base.avatar_url,
-      social_links: base.social_links,
-    },
-    cards: [
-      { id: uid(), uid: "TAP-XX-001", shortcode: "tap001", status: "active", taps: 1925, created: "May 1, 2026", mode: "fleet" },
-      { id: uid(), uid: "TAP-XX-002", shortcode: "tap002", status: "inactive", taps: 441, created: "Apr 18, 2026", mode: "personal" },
-    ],
-    modes: [
-      { id: uid(), mode_name: "Fleet", mode_type: "fleet", is_default: true },
-      { id: uid(), mode_name: "Corporate", mode_type: "corporate", is_default: false },
-      { id: uid(), mode_name: "Driver", mode_type: "driver", is_default: false },
-    ],
-    themes: [
-      { id: uid(), label: "Obsidian Orange", theme_key: "obsidian", layout: "spacious", is_active: true },
-      { id: uid(), label: "Midnight Blue", theme_key: "midnight", layout: "compact", is_active: false },
-    ],
-    settings: {
-      id: uid(),
-      public_profile: true,
-      show_analytics_badges: true,
-      hide_fleet_info: false,
-      allow_search_indexing: true,
-      opengraph_preview: true,
-      rate_limit_taps: true,
-      anti_scraping: true,
-      custom_domain: "",
-    },
-    analytics: [
-      { id: uid(), source: "nfc", city: "Manila", device: "Mobile iOS", referrer: "tap", created_at: new Date().toISOString() },
-      { id: uid(), source: "qr", city: "Quezon City", device: "Android", referrer: "qr", created_at: new Date(Date.now() - 1000 * 60 * 20).toISOString() },
-      { id: uid(), source: "direct", city: "Makati", device: "Chrome", referrer: "direct", created_at: new Date(Date.now() - 1000 * 60 * 50).toISOString() },
-    ],
+    profile: null,
+    cards: [],
+    modes: [],
+    themes: [],
+    settings: null,
+    analytics: [],
   };
 }
 
@@ -123,66 +88,189 @@ function canUseStorage() {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 }
 
-export function loadDashboardState(): DashboardState {
-  if (!canUseStorage()) {
-    return initialState();
-  }
-
+function loadState(): DashboardState {
+  if (!canUseStorage()) return initialState();
   const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) {
-    const seed = initialState();
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
-    return seed;
-  }
+  if (!raw) return initialState();
 
   try {
     return JSON.parse(raw) as DashboardState;
   } catch {
-    const seed = initialState();
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(seed));
-    return seed;
+    return initialState();
   }
 }
 
-export function saveDashboardState(state: DashboardState) {
-  if (!canUseStorage()) {
-    return;
-  }
+function saveState(state: DashboardState) {
+  if (!canUseStorage()) return;
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-export function createProfile(profile: Omit<DashboardProfile, "id">) {
-  const state = loadDashboardState();
-  state.profile = { ...profile, id: uid() };
-  saveDashboardState(state);
-  return state.profile;
+async function getAuthedProfileId(): Promise<{ db: ReturnType<typeof getSupabaseBrowserClient>; profileId: string | null }> {
+  const db = getSupabaseBrowserClient();
+  if (!db) return { db: null, profileId: null };
+
+  const { data: { user } } = await db.auth.getUser();
+  if (!user) return { db, profileId: null };
+
+  const { data } = await db.from("profiles").select("id").eq("user_id", user.id).single();
+  return { db, profileId: data?.id ?? null };
 }
 
-export function readProfile() {
-  return loadDashboardState().profile;
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-export function updateProfile(profile: DashboardProfile) {
-  const state = loadDashboardState();
-  state.profile = profile;
-  saveDashboardState(state);
-  return profile;
+export async function readProfile(): Promise<DashboardProfile | null> {
+  const db = getSupabaseBrowserClient();
+  if (db) {
+    const { data: { user } } = await db.auth.getUser();
+    if (user) {
+      const { data } = await db
+        .from("profiles")
+        .select("id, username, full_name, position, company, bio, avatar_url, social_links(platform, url)")
+        .eq("user_id", user.id)
+        .single();
+      if (data) {
+        return {
+          id: data.id as string,
+          username: data.username as string,
+          full_name: data.full_name as string,
+          position: (data.position as string) ?? "",
+          company: (data.company as string) ?? "",
+          bio: (data.bio as string) ?? "",
+          avatar_url: data.avatar_url as string | null,
+          social_links: (data.social_links as { platform: string; url: string }[]) ?? [],
+        };
+      }
+    }
+  }
+
+  return loadState().profile;
 }
 
-export function deleteProfile() {
-  const state = loadDashboardState();
+export async function createProfile(profile: Omit<DashboardProfile, "id">): Promise<DashboardProfile> {
+  const db = getSupabaseBrowserClient();
+  if (db) {
+    const { data: { user } } = await db.auth.getUser();
+    if (user) {
+      const { data: existing } = await db.from("profiles").select("id").eq("user_id", user.id).maybeSingle();
+
+      const payload = {
+        user_id: user.id,
+        username: profile.username,
+        full_name: profile.full_name,
+        position: profile.position,
+        company: profile.company,
+        bio: profile.bio,
+        avatar_url: profile.avatar_url,
+      };
+
+      const { data, error } = existing?.id
+        ? await db.from("profiles").update(payload).eq("id", existing.id).select("id").single()
+        : await db.from("profiles").insert(payload).select("id").single();
+
+      if (data && !error) {
+        await db.from("social_links").delete().eq("profile_id", data.id);
+        if (profile.social_links.length) {
+          await db.from("social_links").insert(profile.social_links.map((l) => ({ profile_id: data.id, platform: l.platform, url: l.url })));
+        }
+        const created: DashboardProfile = { ...profile, id: data.id as string };
+        const state = loadState();
+        state.profile = created;
+        saveState(state);
+        return created;
+      }
+    }
+  }
+
+  const state = loadState();
+  const created = { ...profile, id: genId() };
+  state.profile = created;
+  saveState(state);
+  return created;
+}
+
+export async function updateProfile(profile: DashboardProfile): Promise<DashboardProfile> {
+  return createProfile({
+    username: profile.username,
+    full_name: profile.full_name,
+    position: profile.position,
+    company: profile.company,
+    bio: profile.bio,
+    avatar_url: profile.avatar_url,
+    social_links: profile.social_links,
+  });
+}
+
+export async function deleteProfile(): Promise<void> {
+  const db = getSupabaseBrowserClient();
+  if (db) {
+    const { data: { user } } = await db.auth.getUser();
+    if (user) await db.from("profiles").delete().eq("user_id", user.id);
+  }
+
+  const state = loadState();
   state.profile = null;
-  saveDashboardState(state);
+  saveState(state);
 }
 
-export function readCards() {
-  return loadDashboardState().cards;
+export async function readCards(): Promise<DashboardCard[]> {
+  const { db, profileId } = await getAuthedProfileId();
+  if (db && profileId) {
+    const { data } = await db.from("nfc_cards").select("*").eq("profile_id", profileId).order("created_at", { ascending: false });
+    if (data) {
+      return (data as Array<{ id: string; uid: string; shortcode: string; is_active: boolean; tap_count: number; created_at: string }>).map((c) => ({
+        id: c.id,
+        uid: c.uid,
+        shortcode: c.shortcode,
+        status: c.is_active ? "active" : "inactive",
+        taps: c.tap_count,
+        created: formatDate(c.created_at),
+        mode: "fleet",
+      }));
+    }
+  }
+
+  return loadState().cards;
 }
 
-export function createCard(input: Omit<DashboardCard, "id" | "created" | "taps">) {
-  const state = loadDashboardState();
+export async function createCard(input: Omit<DashboardCard, "id" | "created" | "taps">): Promise<DashboardCard> {
+  const { db, profileId } = await getAuthedProfileId();
+  if (db && profileId) {
+    const normalizedShortcode = input.shortcode.trim();
+    const { data, error } = await db
+      .from("nfc_cards")
+      .insert({
+        profile_id: profileId,
+        uid: input.uid.trim(),
+        shortcode: normalizedShortcode,
+        is_active: input.status === "active",
+        tap_count: 0,
+      })
+      .select("*")
+      .single();
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    if (data) {
+      const row = data as { id: string; uid: string; shortcode: string; is_active: boolean; tap_count: number; created_at: string };
+      return {
+        id: row.id,
+        uid: row.uid,
+        shortcode: row.shortcode,
+        status: row.is_active ? "active" : "inactive",
+        taps: row.tap_count,
+        created: formatDate(row.created_at),
+        mode: input.mode,
+      };
+    }
+  }
+
+  const state = loadState();
   const card: DashboardCard = {
-    id: uid(),
+    id: genId(),
     uid: input.uid,
     shortcode: input.shortcode,
     mode: input.mode,
@@ -191,127 +279,260 @@ export function createCard(input: Omit<DashboardCard, "id" | "created" | "taps">
     created: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
   };
   state.cards = [card, ...state.cards];
-  saveDashboardState(state);
+  saveState(state);
   return card;
 }
 
-export function updateCard(card: DashboardCard) {
-  const state = loadDashboardState();
+export async function updateCard(card: DashboardCard): Promise<void> {
+  const db = getSupabaseBrowserClient();
+  if (db) {
+    const { error } = await db.from("nfc_cards").update({ uid: card.uid, shortcode: card.shortcode, is_active: card.status === "active" }).eq("id", card.id);
+    if (error) throw new Error(error.message);
+  }
+
+  const state = loadState();
   state.cards = state.cards.map((c) => (c.id === card.id ? card : c));
-  saveDashboardState(state);
+  saveState(state);
 }
 
-export function deleteCard(cardId: string) {
-  const state = loadDashboardState();
+export async function deleteCard(cardId: string): Promise<void> {
+  const db = getSupabaseBrowserClient();
+  if (db) {
+    const { error } = await db.from("nfc_cards").delete().eq("id", cardId);
+    if (error) throw new Error(error.message);
+  }
+
+  const state = loadState();
   state.cards = state.cards.filter((c) => c.id !== cardId);
-  saveDashboardState(state);
+  saveState(state);
 }
 
-export function readModes() {
-  return loadDashboardState().modes;
-}
-
-export function createMode(mode: Omit<DashboardMode, "id">) {
-  const state = loadDashboardState();
-  const next = { ...mode, id: uid() };
-  if (next.is_default) {
-    state.modes = state.modes.map((m) => ({ ...m, is_default: false }));
+export async function readModes(): Promise<DashboardMode[]> {
+  const { db, profileId } = await getAuthedProfileId();
+  if (db && profileId) {
+    const { data } = await db.from("tap_modes").select("*").eq("profile_id", profileId);
+    if (data) {
+      return (data as Array<{ id: string; mode_name: string; mode_type: string; is_default: boolean }>).map((m) => ({
+        id: m.id,
+        mode_name: m.mode_name,
+        mode_type: m.mode_type as ModeType,
+        is_default: m.is_default,
+      }));
+    }
   }
-  state.modes = [next, ...state.modes];
-  saveDashboardState(state);
-  return next;
+
+  return loadState().modes;
 }
 
-export function updateMode(mode: DashboardMode) {
-  const state = loadDashboardState();
-  if (mode.is_default) {
-    state.modes = state.modes.map((m) => ({ ...m, is_default: false }));
+export async function createMode(mode: Omit<DashboardMode, "id">): Promise<DashboardMode> {
+  const { db, profileId } = await getAuthedProfileId();
+  if (db && profileId) {
+    if (mode.is_default) await db.from("tap_modes").update({ is_default: false }).eq("profile_id", profileId);
+    const { data, error } = await db
+      .from("tap_modes")
+      .insert({ profile_id: profileId, mode_name: mode.mode_name, mode_type: mode.mode_type, is_default: mode.is_default })
+      .select("*")
+      .single();
+
+    if (error) throw new Error(error.message);
+    if (data) {
+      return {
+        id: data.id as string,
+        mode_name: data.mode_name as string,
+        mode_type: data.mode_type as ModeType,
+        is_default: data.is_default as boolean,
+      };
+    }
   }
+
+  const state = loadState();
+  const created: DashboardMode = { ...mode, id: genId() };
+  if (created.is_default) state.modes = state.modes.map((m) => ({ ...m, is_default: false }));
+  state.modes = [created, ...state.modes];
+  saveState(state);
+  return created;
+}
+
+export async function updateMode(mode: DashboardMode): Promise<void> {
+  const { db, profileId } = await getAuthedProfileId();
+  if (db && profileId) {
+    if (mode.is_default) await db.from("tap_modes").update({ is_default: false }).eq("profile_id", profileId);
+    const { error } = await db.from("tap_modes").update({ mode_name: mode.mode_name, mode_type: mode.mode_type, is_default: mode.is_default }).eq("id", mode.id);
+    if (error) throw new Error(error.message);
+  }
+
+  const state = loadState();
+  if (mode.is_default) state.modes = state.modes.map((m) => ({ ...m, is_default: false }));
   state.modes = state.modes.map((m) => (m.id === mode.id ? mode : m));
-  saveDashboardState(state);
+  saveState(state);
 }
 
-export function deleteMode(id: string) {
-  const state = loadDashboardState();
-  state.modes = state.modes.filter((m) => m.id !== id);
-  saveDashboardState(state);
-}
-
-export function readThemes() {
-  return loadDashboardState().themes;
-}
-
-export function createTheme(theme: Omit<DashboardTheme, "id">) {
-  const state = loadDashboardState();
-  const next = { ...theme, id: uid() };
-  if (next.is_active) {
-    state.themes = state.themes.map((t) => ({ ...t, is_active: false }));
+export async function deleteMode(id: string): Promise<void> {
+  const db = getSupabaseBrowserClient();
+  if (db) {
+    const { error } = await db.from("tap_modes").delete().eq("id", id);
+    if (error) throw new Error(error.message);
   }
-  state.themes = [next, ...state.themes];
-  saveDashboardState(state);
-  return next;
+
+  const state = loadState();
+  state.modes = state.modes.filter((m) => m.id !== id);
+  saveState(state);
 }
 
-export function updateTheme(theme: DashboardTheme) {
-  const state = loadDashboardState();
+export async function readThemes(): Promise<DashboardTheme[]> {
+  const state = loadState();
+  const db = getSupabaseBrowserClient();
+  if (db) {
+    const { data: { user } } = await db.auth.getUser();
+    if (user) {
+      const { data } = await db.from("profiles").select("theme").eq("user_id", user.id).single();
+      if (data?.theme) {
+        state.themes = state.themes.map((t) => ({ ...t, is_active: t.theme_key === (data.theme as string) }));
+        saveState(state);
+      }
+    }
+  }
+  return state.themes;
+}
+
+async function syncActiveTheme(themeKey: string): Promise<void> {
+  const db = getSupabaseBrowserClient();
+  if (!db) return;
+  const { data: { user } } = await db.auth.getUser();
+  if (user) {
+    await db.from("profiles").update({ theme: themeKey }).eq("user_id", user.id);
+  }
+}
+
+export async function createTheme(theme: Omit<DashboardTheme, "id">): Promise<DashboardTheme> {
+  const state = loadState();
+  const created: DashboardTheme = { ...theme, id: genId() };
+  if (created.is_active) {
+    state.themes = state.themes.map((t) => ({ ...t, is_active: false }));
+    await syncActiveTheme(created.theme_key);
+  }
+  state.themes = [created, ...state.themes];
+  saveState(state);
+  return created;
+}
+
+export async function updateTheme(theme: DashboardTheme): Promise<void> {
+  const state = loadState();
   if (theme.is_active) {
     state.themes = state.themes.map((t) => ({ ...t, is_active: false }));
+    await syncActiveTheme(theme.theme_key);
   }
   state.themes = state.themes.map((t) => (t.id === theme.id ? theme : t));
-  saveDashboardState(state);
+  saveState(state);
 }
 
-export function deleteTheme(id: string) {
-  const state = loadDashboardState();
+export async function deleteTheme(id: string): Promise<void> {
+  const state = loadState();
   state.themes = state.themes.filter((t) => t.id !== id);
-  saveDashboardState(state);
+  saveState(state);
 }
 
-export function readSettings() {
-  return loadDashboardState().settings;
+export function readSettings(): DashboardSettings | null {
+  return loadState().settings;
 }
 
-export function createSettings(settings: Omit<DashboardSettings, "id">) {
-  const state = loadDashboardState();
-  const next = { ...settings, id: uid() };
+export function createSettings(settings: Omit<DashboardSettings, "id">): DashboardSettings {
+  const state = loadState();
+  const next: DashboardSettings = { ...settings, id: genId() };
   state.settings = next;
-  saveDashboardState(state);
+  saveState(state);
   return next;
 }
 
-export function updateSettings(settings: DashboardSettings) {
-  const state = loadDashboardState();
+export function updateSettings(settings: DashboardSettings): DashboardSettings {
+  const state = loadState();
   state.settings = settings;
-  saveDashboardState(state);
+  saveState(state);
   return settings;
 }
 
-export function deleteSettings() {
-  const state = loadDashboardState();
+export function deleteSettings(): void {
+  const state = loadState();
   state.settings = null;
-  saveDashboardState(state);
+  saveState(state);
 }
 
-export function readAnalytics() {
-  return loadDashboardState().analytics;
+export async function readAnalytics(): Promise<AnalyticsEvent[]> {
+  const { db, profileId } = await getAuthedProfileId();
+  if (db && profileId) {
+    const { data: cards } = await db.from("nfc_cards").select("id").eq("profile_id", profileId);
+    if (cards && cards.length > 0) {
+      const cardIds = (cards as Array<{ id: string }>).map((c) => c.id);
+      const { data } = await db.from("tap_analytics").select("*").in("card_id", cardIds).order("created_at", { ascending: false });
+      if (data) {
+        return (data as Array<{ id: string; referrer: string | null; city: string | null; device: string | null; created_at: string }>).map((a) => ({
+          id: a.id,
+          source: (a.referrer === "qr" ? "qr" : a.referrer === "tap" ? "nfc" : "direct") as "nfc" | "qr" | "direct",
+          city: a.city ?? "",
+          device: a.device ?? "",
+          referrer: a.referrer ?? "",
+          created_at: a.created_at,
+        }));
+      }
+    }
+  }
+
+  return loadState().analytics;
 }
 
-export function createAnalyticsEvent(event: Omit<AnalyticsEvent, "id" | "created_at">) {
-  const state = loadDashboardState();
-  const next: AnalyticsEvent = { ...event, id: uid(), created_at: new Date().toISOString() };
-  state.analytics = [next, ...state.analytics];
-  saveDashboardState(state);
-  return next;
+export async function createAnalyticsEvent(event: Omit<AnalyticsEvent, "id" | "created_at">): Promise<AnalyticsEvent> {
+  const { db, profileId } = await getAuthedProfileId();
+  if (db && profileId) {
+    const { data: cards } = await db.from("nfc_cards").select("id").eq("profile_id", profileId).limit(1);
+    if (cards && cards.length > 0) {
+      const cardId = (cards as Array<{ id: string }>)[0].id;
+      const { data, error } = await db
+        .from("tap_analytics")
+        .insert({ card_id: cardId, device: event.device, city: event.city, referrer: event.source === "nfc" ? "tap" : event.source })
+        .select("*")
+        .single();
+
+      if (error) throw new Error(error.message);
+      if (data) {
+        return {
+          id: data.id as string,
+          source: event.source,
+          city: (data.city as string) ?? "",
+          device: (data.device as string) ?? "",
+          referrer: (data.referrer as string) ?? "",
+          created_at: data.created_at as string,
+        };
+      }
+    }
+  }
+
+  const state = loadState();
+  const created: AnalyticsEvent = { ...event, id: genId(), created_at: new Date().toISOString() };
+  state.analytics = [created, ...state.analytics];
+  saveState(state);
+  return created;
 }
 
-export function updateAnalyticsEvent(event: AnalyticsEvent) {
-  const state = loadDashboardState();
-  state.analytics = state.analytics.map((e) => (e.id === event.id ? event : e));
-  saveDashboardState(state);
+export async function updateAnalyticsEvent(event: AnalyticsEvent): Promise<void> {
+  const db = getSupabaseBrowserClient();
+  if (db) {
+    const { error } = await db.from("tap_analytics").update({ device: event.device, city: event.city, referrer: event.referrer }).eq("id", event.id);
+    if (error) throw new Error(error.message);
+  }
+
+  const state = loadState();
+  state.analytics = state.analytics.map((a) => (a.id === event.id ? event : a));
+  saveState(state);
 }
 
-export function deleteAnalyticsEvent(id: string) {
-  const state = loadDashboardState();
-  state.analytics = state.analytics.filter((e) => e.id !== id);
-  saveDashboardState(state);
+export async function deleteAnalyticsEvent(id: string): Promise<void> {
+  const db = getSupabaseBrowserClient();
+  if (db) {
+    const { error } = await db.from("tap_analytics").delete().eq("id", id);
+    if (error) throw new Error(error.message);
+  }
+
+  const state = loadState();
+  state.analytics = state.analytics.filter((a) => a.id !== id);
+  saveState(state);
 }

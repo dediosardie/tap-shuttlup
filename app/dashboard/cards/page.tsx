@@ -9,7 +9,7 @@ import {
   readCards,
   updateCard,
   type DashboardCard,
-} from "../../../lib/dashboard-crud";
+} from "@/lib/dashboard-crud";
 import type { ModeType } from "../../../lib/types";
 
 export default function DashboardCardsPage() {
@@ -17,18 +17,19 @@ export default function DashboardCardsPage() {
   const [copiedUid, setCopiedUid] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ uid: "", shortcode: "", mode: "fleet" as ModeType });
+  const [message, setMessage] = useState<string>("");
 
   useEffect(() => {
-    setCards(readCards());
+    void readCards().then(setCards);
   }, []);
 
   function persist(next: DashboardCard[]) {
     setCards(next);
   }
 
-  function toggleStatus(card: DashboardCard) {
+  async function toggleStatus(card: DashboardCard) {
     const next: DashboardCard = { ...card, status: card.status === "active" ? "inactive" : "active" };
-    updateCard(next);
+    await updateCard(next);
     persist(cards.map((c) => (c.id === card.id ? next : c)));
   }
 
@@ -38,29 +39,48 @@ export default function DashboardCardsPage() {
     setTimeout(() => setCopiedUid(null), 2000);
   }
 
-  function handleCreate() {
+  async function handleCreate() {
     if (!form.uid || !form.shortcode) {
+      setMessage("UID and shortcode are required.");
       return;
     }
-    const created = createCard({
-      uid: form.uid,
-      shortcode: form.shortcode,
-      mode: form.mode,
-      status: "active",
-    });
-    persist([created, ...cards]);
-    setForm({ uid: "", shortcode: "", mode: "fleet" });
+    try {
+      const created = await createCard({
+        uid: form.uid,
+        shortcode: form.shortcode,
+        mode: form.mode,
+        status: "active",
+      });
+      persist([created, ...cards]);
+      setForm({ uid: "", shortcode: "", mode: "fleet" });
+      setMessage("Card created successfully.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Failed to create card.");
+    }
   }
 
-  function handleDelete(id: string) {
-    deleteCard(id);
+  async function handleDelete(id: string) {
+    await deleteCard(id);
     persist(cards.filter((c) => c.id !== id));
   }
 
-  function handleInlineUpdate(card: DashboardCard, patch: Partial<DashboardCard>) {
+  async function handleInlineUpdate(card: DashboardCard, patch: Partial<DashboardCard>) {
     const next = { ...card, ...patch };
-    updateCard(next);
+    await updateCard(next);
     persist(cards.map((c) => (c.id === card.id ? next : c)));
+  }
+
+  function handleGenerateQr() {
+    const target = cards[0]?.shortcode || form.shortcode;
+    if (!target) {
+      setMessage("Create a card or enter a shortcode first.");
+      return;
+    }
+
+    const tapUrl = `https://tap.shuttlup.com/t/${target}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&color=F97316&bgcolor=121212&data=${encodeURIComponent(tapUrl)}`;
+    window.open(qrUrl, "_blank", "noopener,noreferrer");
+    setMessage(`Generated QR for ${target}.`);
   }
 
   return (
@@ -71,6 +91,7 @@ export default function DashboardCardsPage() {
         <div className="flex gap-2">
           <button
             type="button"
+            onClick={handleGenerateQr}
             className="flex items-center gap-2 rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-4 py-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
           >
             <QrCode className="h-4 w-4" /> Generate QR
@@ -117,6 +138,10 @@ export default function DashboardCardsPage() {
           Add Card
         </button>
       </div>
+
+      {message ? (
+        <p className="mb-4 text-xs text-[var(--text-muted)]">{message}</p>
+      ) : null}
 
       {/* Cards list */}
       <div className="space-y-3">
