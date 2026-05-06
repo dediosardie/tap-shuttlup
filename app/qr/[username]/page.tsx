@@ -1,8 +1,9 @@
 import { notFound, redirect } from "next/navigation";
-import { getPublicProfileByUsername } from "@/lib/public-profile-server";
+import { getPublicProfileByUsername, recordUsernameAccess } from "@/lib/public-profile-server";
 import { absoluteUrl } from "@/lib/utils";
 import type { Metadata } from "next";
 import { BadgeCheck, Download, QrCode, Wifi } from "lucide-react";
+import { headers } from "next/headers";
 
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
   const { username } = await params;
@@ -22,6 +23,9 @@ export default async function QrProfilePage({ params }: { params: Promise<{ user
   if (profile.username !== username) {
     redirect(`/qr/${profile.username}`);
   }
+
+  const requestHeaders = await headers();
+  await recordUsernameAccess(profile.username, "qr", requestHeaders);
 
   const profileUrl = `https://tap.shuttlup.com/${profile.username}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&color=F97316&bgcolor=121212&data=${encodeURIComponent(profileUrl)}`;

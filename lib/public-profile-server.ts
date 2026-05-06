@@ -1,5 +1,6 @@
 import { getSupabaseServerClient } from "@/lib/supabase-server";
 import type { PublicProfile } from "@/lib/types";
+import { parseUserAgent } from "@/lib/analytics";
 
 type ProfileRow = {
   id: string;
@@ -13,6 +14,50 @@ type ProfileRow = {
   verified: boolean;
   theme: string | null;
 };
+
+type AccessSource = "tap" | "qr" | "direct";
+
+type CardRow = {
+  id: string;
+  profile_id: string;
+  is_active: boolean;
+  tap_count: number;
+};
+
+function getClientIp(requestHeaders: Headers): string | null {
+  const forwarded = requestHeaders.get("x-forwarded-for");
+  if (forwarded) {
+    const first = forwarded.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  return requestHeaders.get("x-real-ip")?.trim() || null;
+}
+
+async function insertAnalyticsEvent(cardId: string, source: AccessSource, requestHeaders: Headers): Promise<void> {
+  const supabase = await getSupabaseServerClient();
+  const userAgent = requestHeaders.get("user-agent");
+  const { device, browser, os } = parseUserAgent(userAgent);
+  const ip = getClientIp(requestHeaders);
+  const city = requestHeaders.get("x-vercel-ip-city");
+  const country = requestHeaders.get("x-vercel-ip-country");
+  const referrerHeader = requestHeaders.get("referer");
+
+  await supabase.from("tap_analytics").insert({
+    card_id: cardId,
+    ip_address: ip,
+    device,
+    browser,
+    os,
+    country,
+    city,
+    referrer: source === "direct" ? (referrerHeader ?? "direct") : source,
+  });
+}
+
+async function incrementCardTapCount(cardId: string, currentTapCount: number): Promise<void> {
+  const supabase = await getSupabaseServerClient();
+  await supabase.from("nfc_cards").update({ tap_count: currentTapCount + 1 }).eq("id", cardId);
+}
 
 function mapProfileRow(
   profile: ProfileRow,
@@ -93,6 +138,49 @@ export async function getPublicProfileByShortcode(shortcode: string): Promise<Pu
 
   if (!card || !card.is_active || !card.profile_id) return null;
   return getPublicProfileById(card.profile_id);
+}
+
+export async function recordShortcodeAccess(shortcode: string, source: AccessSource, requestHeaders: Headers): Promise<void> {
+  const supabase = await getSupabaseServerClient();
+  const { data: card } = await supabase
+    .from("nfc_cards")
+    .select("id, profile_id, is_active, tap_count")
+    .ilike("shortcode", shortcode)
+    .limit(1)
+    .maybeSingle();
+
+  const resolvedCard = card as CardRow | null;
+  if (!resolvedCard || !resolvedCard.is_active) return;
+
+  await insertAnalyticsEvent(resolvedCard.id, source, requestHeaders);
+  await incrementCardTapCount(resolvedCard.id, resolvedCard.tap_count ?? 0);
+}
+
+export async function recordUsernameAccess(username: string, source: AccessSource, requestHeaders: Headers): Promise<void> {
+  const supabase = await getSupabaseServerClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id")
+    .ilike("username", username)
+    .limit(1)
+    .maybeSingle();
+
+  if (!profile?.id) return;
+
+  const { data: card } = await supabase
+    .from("nfc_cards")
+    .select("id, profile_id, is_active, tap_count")
+    .eq("profile_id", profile.id)
+    .eq("is_active", true)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const resolvedCard = card as CardRow | null;
+  if (!resolvedCard) return;
+
+  await insertAnalyticsEvent(resolvedCard.id, source, requestHeaders);
+  await incrementCardTapCount(resolvedCard.id, resolvedCard.tap_count ?? 0);
 }
 
 export async function getAuthedUsername(): Promise<string | null> {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { tapEventSchema } from "@/lib/zod-schemas";
 import { parseUserAgent } from "@/lib/analytics";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { recordShortcodeAccess } from "@/lib/public-profile-server";
 
 export async function POST(request: Request) {
   const ip = request.headers.get("x-forwarded-for") ?? "unknown";
@@ -19,6 +20,8 @@ export async function POST(request: Request) {
 
   const ua = request.headers.get("user-agent");
   const device = parseUserAgent(ua);
+
+  await recordShortcodeAccess(parsed.data.shortcode, "tap", request.headers);
 
   return NextResponse.json({
     ok: true,

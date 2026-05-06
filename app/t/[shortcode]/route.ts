@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getPublicProfileByShortcode } from "@/lib/public-profile-server";
-import { parseUserAgent } from "@/lib/analytics";
+import { getPublicProfileByShortcode, recordShortcodeAccess } from "@/lib/public-profile-server";
 
 export async function GET(request: Request, { params }: { params: Promise<{ shortcode: string }> }) {
   const { shortcode } = await params;
@@ -14,9 +13,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ shor
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  const ua = request.headers.get("user-agent");
-  const details = parseUserAgent(ua);
-  console.info("tap-event", { shortcode, ...details });
+  await recordShortcodeAccess(shortcode, "tap", request.headers);
 
   return NextResponse.redirect(new URL(`/${profile.username}`, request.url));
 }

@@ -1,8 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import { PublicProfileView } from "@/components/public/public-profile-view";
 import { absoluteUrl } from "@/lib/utils";
-import { getAuthedUsername, getPublicProfileByUsername } from "@/lib/public-profile-server";
+import { getAuthedUsername, getPublicProfileByUsername, recordUsernameAccess } from "@/lib/public-profile-server";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
   const { username } = await params;
@@ -35,6 +36,9 @@ export default async function PublicProfilePage({ params }: { params: Promise<{ 
     }
     notFound();
   }
+
+  const requestHeaders = await headers();
+  await recordUsernameAccess(profile.username, "direct", requestHeaders);
 
   return <PublicProfileView profile={profile} />;
 }

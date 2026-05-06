@@ -44,6 +44,42 @@ export function DashboardAnalyticsPage() {
       .sort((a, b) => b.taps - a.taps);
   }, [events]);
 
+  const sourceBreakdown = useMemo(() => {
+    const total = events.length;
+    const counts = {
+      nfc: events.filter((e) => e.source === "nfc").length,
+      qr: events.filter((e) => e.source === "qr").length,
+      direct: events.filter((e) => e.source === "direct").length,
+    };
+
+    const rows: Array<{ key: "nfc" | "qr" | "direct"; label: string; count: number; pct: number; color: string }> = [
+      {
+        key: "nfc",
+        label: "NFC Tap",
+        count: counts.nfc,
+        pct: total ? Number(((counts.nfc / total) * 100).toFixed(1)) : 0,
+        color: "#f97316",
+      },
+      {
+        key: "qr",
+        label: "QR",
+        count: counts.qr,
+        pct: total ? Number(((counts.qr / total) * 100).toFixed(1)) : 0,
+        color: "#fb923c",
+      },
+      {
+        key: "direct",
+        label: "Direct",
+        count: counts.direct,
+        pct: total ? Number(((counts.direct / total) * 100).toFixed(1)) : 0,
+        color: "#fdba74",
+      },
+    ];
+
+    const leader = [...rows].sort((a, b) => b.count - a.count)[0];
+    return { total, rows, leader };
+  }, [events]);
+
   async function handleCreate() {
     if (!form.city || !form.device) {
       return;
@@ -78,6 +114,36 @@ export function DashboardAnalyticsPage() {
 
       <div className="mb-6">
         <AnalyticsChart />
+      </div>
+
+      <div className="mb-6 rounded-2xl border border-[var(--border-muted)] bg-[var(--bg-secondary)] p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-[var(--text-primary)]">Traffic Sources</h2>
+          <p className="text-xs text-[var(--text-muted)]">
+            {sourceBreakdown.total.toLocaleString()} total visits
+          </p>
+        </div>
+
+        <div className="space-y-2.5">
+          {sourceBreakdown.rows.map((row) => (
+            <div key={row.key}>
+              <div className="mb-1 flex items-center justify-between text-xs">
+                <span className="text-[var(--text-secondary)]">{row.label}</span>
+                <span className="font-medium text-[var(--text-primary)]">{row.count.toLocaleString()} ({row.pct}%)</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-[var(--bg-elevated)]">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{ width: `${row.pct}%`, backgroundColor: row.color }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-3 text-xs text-[var(--text-disabled)]">
+          Top source: <span className="text-[var(--text-secondary)]">{sourceBreakdown.leader.label}</span>
+        </p>
       </div>
 
       <div className="mb-6 grid gap-2 rounded-2xl border border-[var(--border-muted)] bg-[var(--bg-secondary)] p-4 sm:grid-cols-5">
