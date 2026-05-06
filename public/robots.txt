@@ -1,0 +1,25 @@
+# robots.txt for https://shuttlup.com
+# Last updated: 2025-03-01
+
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /services
+Allow: /contact
+Allow: /blog
+Allow: /blog/
+
+# Disallow legal/utility pages (low SEO value)
+Disallow: /privacy
+Disallow: /terms
+
+# Disallow tracking pages — privacy-sensitive and dynamic
+# Individual tracking sessions are controlled at the page level via noindex meta tags
+Disallow: /track/
+
+# Note: app.shuttlup.com is a separate subdomain.
+# Its robots.txt is managed independently at app.shuttlup.com/robots.txt
+# That subdomain should serve: Disallow: / to prevent app dashboard indexing.
+
+# Sitemap location
+Sitemap: https://shuttlup.com/sitemap.xml
