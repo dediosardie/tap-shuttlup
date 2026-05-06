@@ -86,10 +86,13 @@ export async function getPublicProfileByShortcode(shortcode: string): Promise<Pu
   const db = getViteSupabaseClient();
   if (!db) return null;
 
+  const normalized = shortcode.trim();
+  if (!normalized) return null;
+
   const { data: card } = await db
     .from("nfc_cards")
     .select("profile_id, is_active")
-    .ilike("shortcode", shortcode)
+    .ilike("shortcode", normalized)
     .limit(1)
     .maybeSingle();
 

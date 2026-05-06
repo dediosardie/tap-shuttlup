@@ -5,6 +5,7 @@ import { getPublicProfileByShortcode } from "@/lib/public-profile";
 
 export function TapRedirectPage() {
   const { shortcode = "" } = useParams<{ shortcode: string }>();
+  const normalizedShortcode = shortcode.trim();
   const navigate = useNavigate();
   const [status, setStatus] = useState<"loading" | "not-found">("loading");
 
@@ -13,7 +14,7 @@ export function TapRedirectPage() {
 
     async function resolveShortcode() {
       setStatus("loading");
-      const profile = await getPublicProfileByShortcode(shortcode);
+      const profile = await getPublicProfileByShortcode(normalizedShortcode);
 
       if (!active) return;
 
@@ -28,7 +29,7 @@ export function TapRedirectPage() {
     return () => {
       active = false;
     };
-  }, [shortcode, navigate]);
+  }, [normalizedShortcode, navigate]);
 
   if (status === "not-found") {
     return (
