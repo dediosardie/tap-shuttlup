@@ -1,40 +1,66 @@
 "use client";
 
-import { useState } from "react";
-import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { BadgeCheck, Copy, CreditCard, Plus, QrCode, Wifi, XCircle } from "lucide-react";
-
-type CardStatus = "active" | "inactive";
-
-interface NfcCard {
-  uid: string;
-  shortcode: string;
-  status: CardStatus;
-  taps: number;
-  created: string;
-  mode: string;
-}
-
-const initialCards: NfcCard[] = [
-  { uid: "TAP-XX-001", shortcode: "tap001", status: "active", taps: 1925, created: "May 1, 2026", mode: "Fleet" },
-  { uid: "TAP-XX-002", shortcode: "tap002", status: "inactive", taps: 441, created: "Apr 18, 2026", mode: "Personal" },
-  { uid: "TAP-XX-003", shortcode: "tap003", status: "active", taps: 78, created: "May 5, 2026", mode: "Corporate" },
-];
+import { useEffect, useState } from "react";
+import { DashboardShell } from "../../../components/dashboard/dashboard-shell";
+import { BadgeCheck, Copy, CreditCard, Pencil, Plus, QrCode, Trash2, Wifi, XCircle } from "lucide-react";
+import {
+  createCard,
+  deleteCard,
+  readCards,
+  updateCard,
+  type DashboardCard,
+} from "../../../lib/dashboard-crud";
+import type { ModeType } from "../../../lib/types";
 
 export default function DashboardCardsPage() {
-  const [cards, setCards] = useState<NfcCard[]>(initialCards);
+  const [cards, setCards] = useState<DashboardCard[]>([]);
   const [copiedUid, setCopiedUid] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState({ uid: "", shortcode: "", mode: "fleet" as ModeType });
 
-  function toggleStatus(uid: string) {
-    setCards(prev =>
-      prev.map(c => c.uid === uid ? { ...c, status: c.status === "active" ? "inactive" : "active" } : c)
-    );
+  useEffect(() => {
+    setCards(readCards());
+  }, []);
+
+  function persist(next: DashboardCard[]) {
+    setCards(next);
+  }
+
+  function toggleStatus(card: DashboardCard) {
+    const next: DashboardCard = { ...card, status: card.status === "active" ? "inactive" : "active" };
+    updateCard(next);
+    persist(cards.map((c) => (c.id === card.id ? next : c)));
   }
 
   function copyUrl(shortcode: string, uid: string) {
-    navigator.clipboard.writeText(`https://tap.shuttlup.com/t/${shortcode}`);
+    navigator.clipboard.writeText(`https://tap-shuttlup.vercel.app//t/${shortcode}`);
     setCopiedUid(uid);
     setTimeout(() => setCopiedUid(null), 2000);
+  }
+
+  function handleCreate() {
+    if (!form.uid || !form.shortcode) {
+      return;
+    }
+    const created = createCard({
+      uid: form.uid,
+      shortcode: form.shortcode,
+      mode: form.mode,
+      status: "active",
+    });
+    persist([created, ...cards]);
+    setForm({ uid: "", shortcode: "", mode: "fleet" });
+  }
+
+  function handleDelete(id: string) {
+    deleteCard(id);
+    persist(cards.filter((c) => c.id !== id));
+  }
+
+  function handleInlineUpdate(card: DashboardCard, patch: Partial<DashboardCard>) {
+    const next = { ...card, ...patch };
+    updateCard(next);
+    persist(cards.map((c) => (c.id === card.id ? next : c)));
   }
 
   return (
@@ -51,11 +77,45 @@ export default function DashboardCardsPage() {
           </button>
           <button
             type="button"
+            onClick={handleCreate}
             className="premium-button flex items-center gap-2 rounded-xl px-4 py-2 text-sm"
           >
             <Plus className="h-4 w-4" /> Create NFC Card
           </button>
         </div>
+      </div>
+
+      <div className="mb-4 grid gap-3 rounded-2xl border border-[var(--border-muted)] bg-[var(--bg-secondary)] p-4 sm:grid-cols-4">
+        <input
+          value={form.uid}
+          onChange={(e) => setForm((p) => ({ ...p, uid: e.target.value }))}
+          placeholder="Card UID"
+          className="rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-3 py-2 text-sm text-[var(--text-primary)]"
+        />
+        <input
+          value={form.shortcode}
+          onChange={(e) => setForm((p) => ({ ...p, shortcode: e.target.value }))}
+          placeholder="Shortcode"
+          className="rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-3 py-2 text-sm text-[var(--text-primary)]"
+        />
+        <select
+          value={form.mode}
+          onChange={(e) => setForm((p) => ({ ...p, mode: e.target.value as ModeType }))}
+          className="rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-3 py-2 text-sm text-[var(--text-primary)]"
+        >
+          <option value="personal">Personal</option>
+          <option value="corporate">Corporate</option>
+          <option value="driver">Driver</option>
+          <option value="fleet">Fleet</option>
+          <option value="investor">Investor</option>
+        </select>
+        <button
+          type="button"
+          onClick={handleCreate}
+          className="rounded-xl bg-[var(--accent-color)] px-3 py-2 text-sm font-medium text-white hover:bg-[var(--accent-hover)]"
+        >
+          Add Card
+        </button>
       </div>
 
       {/* Cards list */}
@@ -109,7 +169,15 @@ export default function DashboardCardsPage() {
               </button>
               <button
                 type="button"
-                onClick={() => toggleStatus(card.uid)}
+                onClick={() => setEditingId((v) => (v === card.id ? null : card.id))}
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                title="Edit card"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleStatus(card)}
                 className={`rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
                   card.status === "active"
                     ? "border border-[var(--border-muted)] bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-red-400"
@@ -118,7 +186,39 @@ export default function DashboardCardsPage() {
               >
                 {card.status === "active" ? "Deactivate" : "Activate"}
               </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(card.id)}
+                className="rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-3 py-2 text-xs text-[var(--text-muted)] hover:text-red-400"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
             </div>
+            {editingId === card.id ? (
+              <div className="grid w-full gap-2 sm:grid-cols-3">
+                <input
+                  value={card.uid}
+                  onChange={(e) => handleInlineUpdate(card, { uid: e.target.value })}
+                  className="rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-3 py-2 text-xs text-[var(--text-primary)]"
+                />
+                <input
+                  value={card.shortcode}
+                  onChange={(e) => handleInlineUpdate(card, { shortcode: e.target.value })}
+                  className="rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-3 py-2 text-xs text-[var(--text-primary)]"
+                />
+                <select
+                  value={card.mode}
+                  onChange={(e) => handleInlineUpdate(card, { mode: e.target.value as ModeType })}
+                  className="rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-3 py-2 text-xs text-[var(--text-primary)]"
+                >
+                  <option value="personal">Personal</option>
+                  <option value="corporate">Corporate</option>
+                  <option value="driver">Driver</option>
+                  <option value="fleet">Fleet</option>
+                  <option value="investor">Investor</option>
+                </select>
+              </div>
+            ) : null}
           </div>
         ))}
       </div>

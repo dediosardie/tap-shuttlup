@@ -1,4 +1,4 @@
-# ShuttlUp Tap
+# Shutt'L Up Tap
 
 Production-ready NFC-powered digital business card SaaS scaffold for tap.shuttlup.com.
 
@@ -48,7 +48,7 @@ npm install
 2. Set environment variables in .env.local
 
 ```env
-NEXT_PUBLIC_APP_URL=https://tap.shuttlup.com/
+NEXT_PUBLIC_APP_URL=https://tap-shuttlup.vercel.app//
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ```
@@ -95,7 +95,7 @@ What this updates today:
 ### 2. How Tap Works
 
 The NFC flow is shortcode-based:
-- NFC tag stores only a short URL: https://tap.shuttlup.com/t/{shortcode}
+- NFC tag stores only a short URL: https://tap-shuttlup.vercel.app//t/{shortcode}
 - The route /t/[shortcode] resolves the shortcode
 - If valid, user is redirected to the public profile route: /[username]
 

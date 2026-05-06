@@ -10,7 +10,7 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
   if (!profile) return {};
   return {
     title: `${profile.full_name} QR Code`,
-    description: `Scan to view ${profile.full_name}'s ShuttlUp Tap profile`,
+    description: `Scan to view ${profile.full_name}'s Shutt'L Up Tap profile`,
     openGraph: { url: absoluteUrl(`/qr/${username}`) },
   };
 }
@@ -20,7 +20,7 @@ export default async function QrProfilePage({ params }: { params: Promise<{ user
   const profile = getDemoProfile(username);
   if (!profile) notFound();
 
-  const profileUrl = `https://tap.shuttlup.com//${profile.username}`;
+  const profileUrl = `https://tap-shuttlup.vercel.app//${profile.username}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&color=F97316&bgcolor=121212&data=${encodeURIComponent(profileUrl)}`;
 
   return (
@@ -34,7 +34,7 @@ export default async function QrProfilePage({ params }: { params: Promise<{ user
         {/* Header */}
         <div className="space-y-1">
           <div className="mb-3 inline-flex items-center justify-center gap-1.5 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-medium text-[var(--accent-color)]">
-            <Wifi className="h-3.5 w-3.5" /> ShuttlUp Tap
+            <Wifi className="h-3.5 w-3.5" /> Shutt'L Up Tap
           </div>
           <h1 className="text-xl font-bold text-[var(--text-primary)]">{profile.full_name}</h1>
           <p className="text-sm text-[var(--text-muted)]">{profile.position} · {profile.company}</p>

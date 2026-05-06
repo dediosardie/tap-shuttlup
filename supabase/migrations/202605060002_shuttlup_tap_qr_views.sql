@@ -1,4 +1,4 @@
--- ShuttlUp Tap: QR codes, profile views tracking, and helper views
+-- Shutt'L Up Tap: QR codes, profile views tracking, and helper views
 -- Migration: 202605060002_shuttlup_tap_qr_views.sql
 
 -- ── QR Codes table ──────────────────────────────────────────────────────────

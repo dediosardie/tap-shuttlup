@@ -3,22 +3,22 @@ import { AppProviders } from "@/components/providers/app-providers";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://tap.shuttlup.com/"),
+  metadataBase: new URL("https://tap-shuttlup.vercel.app//"),
   title: {
-    default: "ShuttlUp Tap",
-    template: "%s | ShuttlUp Tap",
+    default: "Shutt'L Up Tap",
+    template: "%s | Shutt'L Up Tap",
   },
   description: "NFC-powered digital business card platform for smart mobility identity.",
   openGraph: {
-    title: "ShuttlUp Tap",
+    title: "Shutt'L Up Tap",
     description: "NFC-powered digital business card platform.",
-    url: "https://tap.shuttlup.com/",
-    siteName: "ShuttlUp Tap",
+    url: "https://tap-shuttlup.vercel.app//",
+    siteName: "Shutt'L Up Tap",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "ShuttlUp Tap",
+    title: "Shutt'L Up Tap",
     description: "NFC-powered digital business card platform.",
   },
 };

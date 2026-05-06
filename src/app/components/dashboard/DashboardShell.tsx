@@ -40,7 +40,7 @@ export function DashboardShell({
               <Wifi className="h-4 w-4 text-white" />
             </div>
             <div>
-              <p className="text-sm font-semibold leading-tight text-[var(--text-primary)]">ShuttlUp Tap</p>
+              <p className="text-sm font-semibold leading-tight text-[var(--text-primary)]">Shutt'L Up Tap</p>
               <p className="text-[10px] uppercase tracking-widest text-[var(--text-muted)]">NFC Platform</p>
             </div>
           </div>

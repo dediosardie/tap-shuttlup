@@ -6,6 +6,6 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function absoluteUrl(path: string) {
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://tap.shuttlup.com/";
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://tap-shuttlup.vercel.app//";
   return new URL(path, base).toString();
 }

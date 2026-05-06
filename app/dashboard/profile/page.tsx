@@ -1,15 +1,90 @@
 "use client";
 
-import { useState } from "react";
-import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { BadgeCheck, Save, User2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { DashboardShell } from "../../../components/dashboard/dashboard-shell";
+import { BadgeCheck, Save, Trash2, UserPlus2, User2 } from "lucide-react";
+import {
+  createProfile,
+  deleteProfile,
+  readProfile,
+  updateProfile,
+  type DashboardProfile,
+} from "../../../lib/dashboard-crud";
 
 export default function DashboardProfilePage() {
   const [saved, setSaved] = useState(false);
+  const [profile, setProfile] = useState<DashboardProfile | null>(null);
+
+  useEffect(() => {
+    setProfile(readProfile());
+  }, []);
 
   function handleSave() {
+    if (!profile) {
+      return;
+    }
+    updateProfile(profile);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
+  }
+
+  function handleCreate() {
+    const created = createProfile({
+      username: "new-profile",
+      full_name: "New User",
+      position: "Title",
+      company: "Company",
+      bio: "Short profile bio",
+      avatar_url: null,
+      social_links: [
+        { platform: "linkedin", url: "" },
+        { platform: "instagram", url: "" },
+        { platform: "website", url: "" },
+      ],
+    });
+    setProfile(created);
+  }
+
+  function handleDelete() {
+    deleteProfile();
+    setProfile(null);
+  }
+
+  function setField<K extends keyof DashboardProfile>(key: K, value: DashboardProfile[K]) {
+    setProfile((prev) => (prev ? { ...prev, [key]: value } : prev));
+  }
+
+  function setSocial(platform: string, url: string) {
+    setProfile((prev) => {
+      if (!prev) {
+        return prev;
+      }
+
+      const hasPlatform = prev.social_links.some((s) => s.platform === platform);
+      const next = hasPlatform
+        ? prev.social_links.map((s) => (s.platform === platform ? { ...s, url } : s))
+        : [...prev.social_links, { platform, url }];
+
+      return { ...prev, social_links: next };
+    });
+  }
+
+  if (!profile) {
+    return (
+      <DashboardShell title="Profile">
+        <div className="rounded-2xl border border-[var(--border-muted)] bg-[var(--bg-secondary)] p-6">
+          <p className="mb-3 text-sm text-[var(--text-muted)]">No profile found.</p>
+          <button
+            type="button"
+            onClick={handleCreate}
+            className="premium-button inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm"
+          >
+            <UserPlus2 className="h-4 w-4" />
+            Create Profile
+          </button>
+        </div>
+      </DashboardShell>
+    );
   }
 
   return (
@@ -24,8 +99,8 @@ export default function DashboardProfilePage() {
             </div>
           </div>
           <div>
-            <p className="font-semibold text-[var(--text-primary)]">Ardie Cruz</p>
-            <p className="text-sm text-[var(--text-muted)]">tap.shuttlup.com/ardie</p>
+            <p className="font-semibold text-[var(--text-primary)]">{profile.full_name}</p>
+            <p className="text-sm text-[var(--text-muted)]">tap.shuttlup.com/{profile.username}</p>
             <button
               type="button"
               className="mt-1 text-xs text-[var(--accent-color)] hover:text-[var(--accent-hover)]"
@@ -38,17 +113,18 @@ export default function DashboardProfilePage() {
         {/* Form fields */}
         <div className="grid gap-4 sm:grid-cols-2">
           {[
-            { id: "name", label: "Full Name", defaultValue: "Ardie Cruz", placeholder: "Full name" },
-            { id: "position", label: "Position / Title", defaultValue: "Fleet Innovation Lead", placeholder: "Your role" },
-            { id: "company", label: "Company", defaultValue: "ShuttlUp Tap", placeholder: "Company name" },
-            { id: "username", label: "Username", defaultValue: "ardie", placeholder: "username" },
-          ].map(({ id, label, defaultValue, placeholder }) => (
+            { id: "full_name", label: "Full Name", value: profile.full_name, placeholder: "Full name" },
+            { id: "position", label: "Position / Title", value: profile.position, placeholder: "Your role" },
+            { id: "company", label: "Company", value: profile.company, placeholder: "Company name" },
+            { id: "username", label: "Username", value: profile.username, placeholder: "username" },
+          ].map(({ id, label, value, placeholder }) => (
             <div key={id} className="space-y-1.5">
               <label htmlFor={id} className="text-xs uppercase tracking-widest text-[var(--text-muted)]">{label}</label>
               <input
                 id={id}
                 type="text"
-                defaultValue={defaultValue}
+                value={value}
+                onChange={(e) => setField(id as keyof DashboardProfile, e.target.value as never)}
                 placeholder={placeholder}
                 className="w-full rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-disabled)] outline-none focus:border-[var(--accent-color)] focus:ring-1 focus:ring-[var(--accent-color)] transition-colors"
               />
@@ -60,7 +136,8 @@ export default function DashboardProfilePage() {
             <textarea
               id="bio"
               rows={3}
-              defaultValue="NFC-powered digital identity for mobility operators, drivers, and enterprise teams."
+              value={profile.bio}
+              onChange={(e) => setField("bio", e.target.value)}
               className="w-full rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-disabled)] outline-none focus:border-[var(--accent-color)] focus:ring-1 focus:ring-[var(--accent-color)] resize-none transition-colors"
             />
           </div>
@@ -78,6 +155,8 @@ export default function DashboardProfilePage() {
               <span className="w-24 shrink-0 text-xs text-[var(--text-muted)]">{label}</span>
               <input
                 type="url"
+                value={profile.social_links.find((s) => s.platform === id)?.url ?? ""}
+                onChange={(e) => setSocial(id, e.target.value)}
                 placeholder={placeholder}
                 className="flex-1 rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-disabled)] outline-none focus:border-[var(--accent-color)] transition-colors"
               />
@@ -94,6 +173,14 @@ export default function DashboardProfilePage() {
           >
             {saved ? <BadgeCheck className="h-4 w-4" /> : <Save className="h-4 w-4" />}
             {saved ? "Saved!" : "Save Profile"}
+          </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-4 py-2.5 text-sm text-[var(--text-muted)] hover:text-red-400"
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete Profile
           </button>
           {saved && <p className="text-sm text-emerald-400">Profile updated successfully.</p>}
         </div>

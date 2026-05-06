@@ -6,7 +6,7 @@ export const demoProfiles: PublicProfile[] = [
     username: "ardie",
     full_name: "Ardie Cruz",
     position: "Fleet Innovation Lead",
-    company: "ShuttlUp Tap",
+    company: "Shutt'L Up Tap",
     bio: "NFC-powered digital identity for mobility operators, drivers, and enterprise teams.",
     avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
     verified: true,
@@ -14,7 +14,7 @@ export const demoProfiles: PublicProfile[] = [
     social_links: [
       { platform: "linkedin", url: "https://linkedin.com" },
       { platform: "instagram", url: "https://instagram.com" },
-      { platform: "website", url: "https://tap.shuttlup.com/" },
+      { platform: "website", url: "https://tap-shuttlup.vercel.app//" },
     ],
     fleet_info: {
       vehicle_type: "Shuttle Van",

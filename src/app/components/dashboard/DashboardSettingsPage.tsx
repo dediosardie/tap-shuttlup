@@ -1,17 +1,25 @@
-import { useState } from "react";
-import { BadgeCheck, Eye, Globe, Lock, Search, Shield } from "lucide-react";
+import { useEffect, useState } from "react";
+import { BadgeCheck, Eye, Globe, Lock, Plus, Search, Shield, Trash2 } from "lucide-react";
 import { DashboardShell } from "@/app/components/dashboard/DashboardShell";
+import {
+  createSettings,
+  deleteSettings,
+  readSettings,
+  updateSettings,
+  type DashboardSettings,
+} from "@/lib/dashboard-crud";
 
 function ToggleRow({
   label,
   description,
-  defaultOn = false,
+  on,
+  onToggle,
 }: {
   label: string;
   description: string;
-  defaultOn?: boolean;
+  on: boolean;
+  onToggle: () => void;
 }) {
-  const [on, setOn] = useState(defaultOn);
   return (
     <div className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--border-muted)] bg-[var(--bg-secondary)] px-5 py-4">
       <div>
@@ -22,7 +30,7 @@ function ToggleRow({
         type="button"
         role="switch"
         aria-checked={on}
-        onClick={() => setOn((v) => !v)}
+        onClick={onToggle}
         className={`relative h-6 w-11 rounded-full transition-colors duration-200 ${
           on ? "bg-[var(--accent-color)]" : "bg-[var(--bg-elevated)]"
         }`}
@@ -38,11 +46,61 @@ function ToggleRow({
 }
 
 export function DashboardSettingsPage() {
+  const [settings, setSettings] = useState<DashboardSettings | null>(null);
   const [saved, setSaved] = useState(false);
 
+  useEffect(() => {
+    setSettings(readSettings());
+  }, []);
+
+  function patchSettings(patch: Partial<DashboardSettings>) {
+    setSettings((prev) => (prev ? { ...prev, ...patch } : prev));
+  }
+
   function handleSave() {
+    if (!settings) {
+      return;
+    }
+    updateSettings(settings);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  }
+
+  function handleCreate() {
+    const created = createSettings({
+      public_profile: true,
+      show_analytics_badges: true,
+      hide_fleet_info: false,
+      allow_search_indexing: true,
+      opengraph_preview: true,
+      rate_limit_taps: true,
+      anti_scraping: true,
+      custom_domain: "",
+    });
+    setSettings(created);
+  }
+
+  function handleDelete() {
+    deleteSettings();
+    setSettings(null);
+  }
+
+  if (!settings) {
+    return (
+      <DashboardShell title="Settings">
+        <div className="rounded-2xl border border-[var(--border-muted)] bg-[var(--bg-secondary)] p-6">
+          <p className="mb-3 text-sm text-[var(--text-muted)]">No settings record found.</p>
+          <button
+            type="button"
+            onClick={handleCreate}
+            className="inline-flex items-center gap-2 rounded-xl bg-[var(--accent-color)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--accent-hover)]"
+          >
+            <Plus className="h-4 w-4" />
+            Create Settings
+          </button>
+        </div>
+      </DashboardShell>
+    );
   }
 
   return (
@@ -54,9 +112,24 @@ export function DashboardSettingsPage() {
             <h2 className="text-sm font-semibold text-[var(--text-primary)]">Privacy &amp; Visibility</h2>
           </div>
           <div className="space-y-2">
-            <ToggleRow label="Public Profile" description="Allow anyone to view your profile via NFC, QR, or direct link." defaultOn />
-            <ToggleRow label="Show Analytics Badges" description="Display tap count, views, and saves on your public card." defaultOn />
-            <ToggleRow label="Hide Fleet Info" description="Conceal vehicle and operator details from public view." />
+            <ToggleRow
+              label="Public Profile"
+              description="Allow anyone to view your profile via NFC, QR, or direct link."
+              on={settings.public_profile}
+              onToggle={() => patchSettings({ public_profile: !settings.public_profile })}
+            />
+            <ToggleRow
+              label="Show Analytics Badges"
+              description="Display tap count, views, and saves on your public card."
+              on={settings.show_analytics_badges}
+              onToggle={() => patchSettings({ show_analytics_badges: !settings.show_analytics_badges })}
+            />
+            <ToggleRow
+              label="Hide Fleet Info"
+              description="Conceal vehicle and operator details from public view."
+              on={settings.hide_fleet_info}
+              onToggle={() => patchSettings({ hide_fleet_info: !settings.hide_fleet_info })}
+            />
           </div>
         </div>
 
@@ -66,8 +139,18 @@ export function DashboardSettingsPage() {
             <h2 className="text-sm font-semibold text-[var(--text-primary)]">SEO &amp; Discovery</h2>
           </div>
           <div className="space-y-2">
-            <ToggleRow label="Allow Search Indexing" description="Let search engines index your public profile page." defaultOn />
-            <ToggleRow label="OpenGraph Preview" description="Generate a rich link preview when your profile is shared." defaultOn />
+            <ToggleRow
+              label="Allow Search Indexing"
+              description="Let search engines index your public profile page."
+              on={settings.allow_search_indexing}
+              onToggle={() => patchSettings({ allow_search_indexing: !settings.allow_search_indexing })}
+            />
+            <ToggleRow
+              label="OpenGraph Preview"
+              description="Generate a rich link preview when your profile is shared."
+              on={settings.opengraph_preview}
+              onToggle={() => patchSettings({ opengraph_preview: !settings.opengraph_preview })}
+            />
           </div>
         </div>
 
@@ -77,8 +160,18 @@ export function DashboardSettingsPage() {
             <h2 className="text-sm font-semibold text-[var(--text-primary)]">Security</h2>
           </div>
           <div className="space-y-2">
-            <ToggleRow label="Rate Limit NFC Taps" description="Prevent spam from a single IP tapping your card repeatedly." defaultOn />
-            <ToggleRow label="Anti-Scraping Protection" description="Block automated profile scrapers and bots." defaultOn />
+            <ToggleRow
+              label="Rate Limit NFC Taps"
+              description="Prevent spam from a single IP tapping your card repeatedly."
+              on={settings.rate_limit_taps}
+              onToggle={() => patchSettings({ rate_limit_taps: !settings.rate_limit_taps })}
+            />
+            <ToggleRow
+              label="Anti-Scraping Protection"
+              description="Block automated profile scrapers and bots."
+              on={settings.anti_scraping}
+              onToggle={() => patchSettings({ anti_scraping: !settings.anti_scraping })}
+            />
           </div>
         </div>
 
@@ -92,6 +185,8 @@ export function DashboardSettingsPage() {
             <input
               id="domain"
               type="text"
+              value={settings.custom_domain}
+              onChange={(e) => patchSettings({ custom_domain: e.target.value })}
               placeholder="tap.yourdomain.com"
               className="mt-2 w-full rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-disabled)] outline-none transition-colors focus:border-[var(--accent-color)]"
             />
@@ -108,6 +203,14 @@ export function DashboardSettingsPage() {
         >
           {saved ? <BadgeCheck className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
           {saved ? "Saved!" : "Save Settings"}
+        </button>
+        <button
+          type="button"
+          onClick={handleDelete}
+          className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-4 py-2.5 text-sm text-[var(--text-muted)] hover:text-red-400"
+        >
+          <Trash2 className="h-4 w-4" />
+          Delete Settings
         </button>
       </div>
     </DashboardShell>

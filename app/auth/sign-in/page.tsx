@@ -40,7 +40,7 @@ export default function SignInPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-md items-center px-4">
       <div className="glass-card w-full rounded-2xl border border-border p-6">
-        <h1 className="text-2xl font-semibold">Sign in to ShuttlUp Tap</h1>
+        <h1 className="text-2xl font-semibold">Sign in to Shutt'L Up Tap</h1>
         <p className="mt-1 text-sm text-muted-foreground">Magic link, email login, and Google OAuth are supported.</p>
         {!supabase && (
           <p className="mt-3 rounded-lg border border-yellow-400/40 bg-yellow-500/10 px-3 py-2 text-xs text-yellow-300">

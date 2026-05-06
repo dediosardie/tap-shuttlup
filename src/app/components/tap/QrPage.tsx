@@ -9,14 +9,14 @@ export function QrPage() {
 
   if (!profile) return <Navigate to="/404" replace />;
 
-  const profileUrl = `https://tap.shuttlup.com//${profile.username}`;
+  const profileUrl = `https://tap-shuttlup.vercel.app//${profile.username}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&color=F97316&bgcolor=121212&data=${encodeURIComponent(profileUrl)}`;
 
   return (
     <>
       <Helmet>
         <title>{`${profile.full_name} QR Code`}</title>
-        <meta name="description" content={`Scan to view ${profile.full_name}'s ShuttlUp Tap profile`} />
+        <meta name="description" content={`Scan to view ${profile.full_name}'s Shutt'L Up Tap profile`} />
       </Helmet>
 
       <main className="animated-grid-bg flex min-h-screen flex-col items-center justify-center px-4 py-16 text-center">
@@ -28,7 +28,7 @@ export function QrPage() {
         <div className="glass-card gradient-border w-full max-w-sm space-y-6 p-8">
           <div className="space-y-1">
             <div className="mb-3 inline-flex items-center justify-center gap-1.5 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-medium text-[var(--accent-color)]">
-              <Wifi className="h-3.5 w-3.5" /> ShuttlUp Tap
+              <Wifi className="h-3.5 w-3.5" /> Shutt'L Up Tap
             </div>
             <h1 className="text-xl font-bold text-[var(--text-primary)]">{profile.full_name}</h1>
             <p className="text-sm text-[var(--text-muted)]">{profile.position} · {profile.company}</p>

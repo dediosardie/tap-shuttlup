@@ -38,7 +38,7 @@ export function DashboardShell({ title, children }: { title: string; children: R
               <Wifi className="h-4 w-4 text-white" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-[var(--text-primary)] leading-tight">ShuttlUp Tap</p>
+              <p className="text-sm font-semibold text-[var(--text-primary)] leading-tight">Shutt'L Up Tap</p>
               <p className="text-[10px] uppercase tracking-widest text-[var(--text-muted)]">NFC Platform</p>
             </div>
           </div>

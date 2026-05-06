@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "ShuttlUp Tap",
-    short_name: "ShuttlUp Tap",
+    name: "Shutt'L Up Tap",
+    short_name: "Shutt'L Up Tap",
     description: "NFC-powered digital identity and business card platform.",
     start_url: "/",
     display: "standalone",

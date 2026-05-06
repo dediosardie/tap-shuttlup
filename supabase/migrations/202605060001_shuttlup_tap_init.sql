@@ -1,4 +1,4 @@
--- ShuttlUp Tap initial schema
+-- Shutt'L Up Tap initial schema
 
 create extension if not exists "pgcrypto";
 

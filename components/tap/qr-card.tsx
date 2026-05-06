@@ -9,7 +9,7 @@ interface QRCardProps {
 
 export function QRCard({ username, name, size = 200 }: QRCardProps) {
   const [copied, setCopied] = useState(false);
-  const profileUrl = `https://tap.shuttlup.com//${username}`;
+  const profileUrl = `https://tap-shuttlup.vercel.app//${username}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&color=F97316&bgcolor=121212&data=${encodeURIComponent(profileUrl)}`;
 
   function handleCopy() {

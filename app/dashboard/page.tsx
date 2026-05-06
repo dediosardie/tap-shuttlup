@@ -1,5 +1,5 @@
-import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { AnalyticsChart } from "@/components/dashboard/analytics-chart";
+import { DashboardShell } from "../../components/dashboard/dashboard-shell";
+import { AnalyticsChart } from "../../components/dashboard/analytics-chart";
 import { BarChart3, CreditCard, Eye, TrendingUp, Wifi } from "lucide-react";
 
 const stats = [
