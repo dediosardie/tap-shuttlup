@@ -20,18 +20,24 @@
     "baseUrl": ".",
     "paths": {
       "@/*": [
-        "./src/*"
+        "./src/*",
+        "./*"
       ]
     },
     "types": [
       "node"
     ],
-    "plugins": []
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ]
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
-    "vite.config.ts"
+    "vite.config.ts",
+    ".next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

@@ -139,7 +139,7 @@ export default function HomePage() {
               Everything your team needs
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-[var(--text-muted)]">
-              Shutt'L Up Tap is a fully integrated NFC identity module built on the ShuttlUp platform.
+              Shutt'L Up Tap is a fully integrated NFC identity module built on the Shutt'L Up platform.
             </p>
           </div>
 

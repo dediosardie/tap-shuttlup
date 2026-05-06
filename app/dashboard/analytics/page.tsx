@@ -15,7 +15,7 @@ import {
 export default function DashboardAnalyticsPage() {
   const [events, setEvents] = useState<AnalyticsEvent[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ source: "nfc" as const, city: "", device: "", referrer: "" });
+  const [form, setForm] = useState<{ source: "nfc" | "qr" | "direct"; city: string; device: string; referrer: string }>({ source: "nfc", city: "", device: "", referrer: "" });
 
   useEffect(() => {
     setEvents(readAnalytics());
