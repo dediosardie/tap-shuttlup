@@ -5,6 +5,7 @@ import { NotFound } from "./components/NotFound";
 import { ProfilePage } from "./components/tap/ProfilePage";
 import { QrPage } from "./components/tap/QrPage";
 import { TapRedirectPage } from "./components/tap/TapRedirectPage";
+import { RequireAuth } from "./components/RequireAuth";
 import { DashboardPage } from "./components/dashboard/DashboardPage";
 import { DashboardAnalyticsPage } from "./components/dashboard/DashboardAnalyticsPage";
 import { DashboardCardsPage } from "./components/dashboard/DashboardCardsPage";
@@ -32,12 +33,17 @@ export const router = createBrowserRouter([
   { path: "/qr/:username", Component: QrPage },
   { path: "/:username",    Component: ProfilePage },
 
-  // Dashboard
-  { path: "/dashboard",            Component: DashboardPage },
-  { path: "/dashboard/analytics",  Component: DashboardAnalyticsPage },
-  { path: "/dashboard/cards",      Component: DashboardCardsPage },
-  { path: "/dashboard/profile",    Component: DashboardProfilePage },
-  { path: "/dashboard/modes",      Component: DashboardModesPage },
-  { path: "/dashboard/themes",     Component: DashboardThemesPage },
-  { path: "/dashboard/settings",   Component: DashboardSettingsPage },
+  // Dashboard — protected by RequireAuth
+  {
+    Component: RequireAuth,
+    children: [
+      { path: "/dashboard",            Component: DashboardPage },
+      { path: "/dashboard/analytics",  Component: DashboardAnalyticsPage },
+      { path: "/dashboard/cards",      Component: DashboardCardsPage },
+      { path: "/dashboard/profile",    Component: DashboardProfilePage },
+      { path: "/dashboard/modes",      Component: DashboardModesPage },
+      { path: "/dashboard/themes",     Component: DashboardThemesPage },
+      { path: "/dashboard/settings",   Component: DashboardSettingsPage },
+    ],
+  },
 ]);
