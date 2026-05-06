@@ -55,7 +55,7 @@ export function Navbar() {
 
         <div className="flex items-center gap-2">
           <a
-            href="https://app.shuttlup.com"
+            href="https://tap.shuttlup.com/"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden rounded-full border border-border-muted px-4 py-2 text-sm text-text-secondary transition-all hover:bg-accent-soft hover:text-text-primary lg:inline-flex"
@@ -105,7 +105,7 @@ export function Navbar() {
             </div>
             <div className="mt-3 grid gap-2 border-t border-border-muted/80 pt-3">
               <a
-                href="https://app.shuttlup.com"
+                href="https://tap.shuttlup.com/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="rounded-xl border border-border-muted px-4 py-3 text-center text-sm text-text-secondary transition-all hover:bg-accent-soft hover:text-text-primary"

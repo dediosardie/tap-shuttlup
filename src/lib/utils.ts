@@ -6,6 +6,6 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function absoluteUrl(path: string) {
-  const base = import.meta.env.VITE_APP_URL ?? "https://tap.shuttlup.com";
+  const base = import.meta.env.VITE_APP_URL ?? "https://tap.shuttlup.com/";
   return new URL(path, base).toString();
 }
