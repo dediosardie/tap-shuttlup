@@ -14,7 +14,7 @@ export const demoProfiles: PublicProfile[] = [
     social_links: [
       { platform: "linkedin", url: "https://linkedin.com" },
       { platform: "instagram", url: "https://instagram.com" },
-      { platform: "website", url: "https://tap-shuttlup.vercel.app//" },
+      { platform: "website", url: "https://tap-shuttlup.vercel.app/" },
     ],
     fleet_info: {
       vehicle_type: "Shuttle Van",

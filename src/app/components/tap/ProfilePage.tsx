@@ -16,7 +16,7 @@ export function ProfilePage() {
         <meta name="description" content={profile.bio} />
         <meta property="og:title" content={`${profile.full_name} · ${profile.position}`} />
         <meta property="og:description" content={profile.bio} />
-        <meta property="og:url" content={`https://tap-shuttlup.vercel.app//${profile.username}`} />
+        <meta property="og:url" content={`https://tap-shuttlup.vercel.app/${profile.username}`} />
       </Helmet>
       <PublicProfileView profile={profile} />
     </>

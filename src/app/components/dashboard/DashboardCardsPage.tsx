@@ -25,7 +25,7 @@ export function DashboardCardsPage() {
   }
 
   function copyUrl(shortcode: string, uid: string) {
-    navigator.clipboard.writeText(`https://tap-shuttlup.vercel.app//t/${shortcode}`);
+    navigator.clipboard.writeText(`https://tap-shuttlup.vercel.app/t/${shortcode}`);
     setCopiedUid(uid);
     setTimeout(() => setCopiedUid(null), 2000);
   }

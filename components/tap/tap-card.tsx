@@ -14,7 +14,7 @@ interface TapCardProps {
 
 export function TapCard({ uid, shortcode, active, tapCount, mode, created, onToggle }: TapCardProps) {
   const [copied, setCopied] = useState(false);
-  const tapUrl = `https://tap-shuttlup.vercel.app//t/${shortcode}`;
+  const tapUrl = `https://tap-shuttlup.vercel.app/t/${shortcode}`;
 
   function handleCopy() {
     navigator.clipboard.writeText(tapUrl);

@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = "https://tap-shuttlup.vercel.app//";
+  const base = "https://tap-shuttlup.vercel.app/";
   return [
     "",
     "/dashboard",

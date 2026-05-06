@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/admin", "/dashboard"],
     },
-    sitemap: "https://tap-shuttlup.vercel.app//sitemap.xml",
+    sitemap: "https://tap-shuttlup.vercel.app/sitemap.xml",
   };
 }
