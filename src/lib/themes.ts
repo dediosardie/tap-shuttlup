@@ -74,6 +74,15 @@ export const THEME_TOKENS: Record<ThemeKey, ThemeTokens> = {
   },
 };
 
+/** Convert a 6-digit hex colour to an rgba() string. */
+function hexToRgba(hex: string, alpha: number): string {
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 /** Instantly apply a theme by writing CSS custom properties to :root. */
 export function applyTheme(themeKey: string): void {
   if (typeof document === "undefined") return;
@@ -87,6 +96,11 @@ export function applyTheme(themeKey: string): void {
   root.style.setProperty("--accent-hover", tokens.accentHover);
   root.style.setProperty("--accent-soft", tokens.accentSoft);
   root.style.setProperty("--accent-purple", tokens.accentPurple);
+  // Gradient + glow used by .premium-button
+  root.style.setProperty("--gradient-brand", `linear-gradient(130deg, ${tokens.accentColor} 0%, ${tokens.accentHover} 100%)`);
+  root.style.setProperty("--glow-orange", hexToRgba(tokens.accentColor, 0.35));
+  root.style.setProperty("--glow-blue", hexToRgba(tokens.accentColor, 0.3));
+  root.style.setProperty("--glow-purple", hexToRgba(tokens.accentHover, 0.3));
   // Keep shadcn/tailwind tokens in sync
   root.style.setProperty("--primary", tokens.accentColor);
   root.style.setProperty("--ring", tokens.accentColor);
