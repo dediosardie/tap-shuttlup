@@ -1,32 +1,13 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   Area, AreaChart, Bar, BarChart, CartesianGrid,
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend,
 } from "recharts";
+import type { AnalyticsEvent } from "@/lib/dashboard-crud";
 
-const weeklyData = [
-  { day: "Mon", taps: 44, views: 32, saves: 8 },
-  { day: "Tue", taps: 51, views: 38, saves: 12 },
-  { day: "Wed", taps: 67, views: 49, saves: 15 },
-  { day: "Thu", taps: 72, views: 57, saves: 19 },
-  { day: "Fri", taps: 89, views: 69, saves: 22 },
-  { day: "Sat", taps: 73, views: 61, saves: 17 },
-  { day: "Sun", taps: 64, views: 53, saves: 14 },
-];
-
-const deviceData = [
-  { name: "Mobile", value: 68, color: "#f97316" },
-  { name: "Desktop", value: 22, color: "#fb923c" },
-  { name: "Tablet", value: 10, color: "#fdba74" },
-];
-
-const sourceData = [
-  { source: "NFC Tap", count: 142 },
-  { source: "QR Code", count: 87 },
-  { source: "Direct", count: 53 },
-  { source: "Shared Link", count: 31 },
-];
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const tooltipStyle = {
   backgroundColor: "rgba(18,18,18,0.95)",
@@ -39,7 +20,44 @@ const tooltipStyle = {
 
 const axisStyle = { stroke: "rgba(255,255,255,0.25)", fontSize: 11 };
 
-export function AnalyticsChart() {
+function buildWeeklyData(events: AnalyticsEvent[]) {
+  const now = new Date();
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - (6 - i));
+    const dateStr = d.toISOString().slice(0, 10);
+    const dayEvents = events.filter((e) => e.created_at.slice(0, 10) === dateStr);
+    return {
+      day: DAYS[d.getDay()],
+      taps: dayEvents.filter((e) => e.source === "nfc").length,
+      views: dayEvents.length,
+    };
+  });
+}
+
+function buildDeviceData(events: AnalyticsEvent[]) {
+  const mobile = events.filter((e) => /mobile|android|iphone/i.test(e.device ?? "")).length;
+  const tablet = events.filter((e) => /tablet|ipad/i.test(e.device ?? "")).length;
+  const desktop = events.length - mobile - tablet;
+  return [
+    { name: "Mobile", value: mobile, color: "#f97316" },
+    { name: "Desktop", value: desktop, color: "#fb923c" },
+    { name: "Tablet", value: tablet, color: "#fdba74" },
+  ].filter((d) => d.value > 0);
+}
+
+function buildSourceData(events: AnalyticsEvent[]) {
+  return [
+    { source: "NFC Tap", count: events.filter((e) => e.source === "nfc").length },
+    { source: "QR Code", count: events.filter((e) => e.source === "qr").length },
+    { source: "Direct", count: events.filter((e) => e.source === "direct").length },
+  ];
+}
+
+export function AnalyticsChart({ events = [] }: { events?: AnalyticsEvent[] }) {
+  const weeklyData = useMemo(() => buildWeeklyData(events), [events]);
+  const deviceData = useMemo(() => buildDeviceData(events), [events]);
+  const sourceData = useMemo(() => buildSourceData(events), [events]);
   return (
     <div className="space-y-6">
       {/* Taps & Views line chart */}

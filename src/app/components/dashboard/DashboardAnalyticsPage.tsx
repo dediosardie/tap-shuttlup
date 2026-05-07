@@ -113,7 +113,7 @@ export function DashboardAnalyticsPage() {
       </div>
 
       <div className="mb-6">
-        <AnalyticsChart />
+        <AnalyticsChart events={events} />
       </div>
 
       <div className="mb-6 rounded-2xl border border-[var(--border-muted)] bg-[var(--bg-secondary)] p-4">

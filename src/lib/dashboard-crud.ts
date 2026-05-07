@@ -1,5 +1,4 @@
 import type { ModeType } from "@/lib/types";
-import { demoProfiles } from "@/lib/mock-data";
 import { getViteSupabaseClient } from "@/lib/supabase";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -79,47 +78,13 @@ function genId() {
 }
 
 function initialState(): DashboardState {
-  const base = demoProfiles[0];
   return {
-    profile: {
-      id: base.id,
-      username: base.username,
-      full_name: base.full_name,
-      position: base.position,
-      company: base.company,
-      bio: base.bio,
-      avatar_url: base.avatar_url,
-      social_links: base.social_links,
-    },
-    cards: [
-      { id: genId(), uid: "TAP-XX-001", shortcode: "tap001", status: "active", taps: 1925, created: "May 1, 2026", mode: "fleet" },
-      { id: genId(), uid: "TAP-XX-002", shortcode: "tap002", status: "inactive", taps: 441, created: "Apr 18, 2026", mode: "personal" },
-    ],
-    modes: [
-      { id: genId(), mode_name: "Fleet", mode_type: "fleet", is_default: true },
-      { id: genId(), mode_name: "Corporate", mode_type: "corporate", is_default: false },
-      { id: genId(), mode_name: "Driver", mode_type: "driver", is_default: false },
-    ],
-    themes: [
-      { id: genId(), label: "Obsidian Orange", theme_key: "obsidian", layout: "spacious", is_active: true },
-      { id: genId(), label: "Midnight Blue", theme_key: "midnight", layout: "compact", is_active: false },
-    ],
-    settings: {
-      id: genId(),
-      public_profile: true,
-      show_analytics_badges: true,
-      hide_fleet_info: false,
-      allow_search_indexing: true,
-      opengraph_preview: true,
-      rate_limit_taps: true,
-      anti_scraping: true,
-      custom_domain: "",
-    },
-    analytics: [
-      { id: genId(), source: "nfc", city: "Manila", device: "Mobile iOS", referrer: "tap", created_at: new Date().toISOString() },
-      { id: genId(), source: "qr", city: "Quezon City", device: "Android", referrer: "qr", created_at: new Date(Date.now() - 1000 * 60 * 20).toISOString() },
-      { id: genId(), source: "direct", city: "Makati", device: "Chrome", referrer: "direct", created_at: new Date(Date.now() - 1000 * 60 * 50).toISOString() },
-    ],
+    profile: null,
+    cards: [],
+    modes: [],
+    themes: [],
+    settings: null,
+    analytics: [],
   };
 }
 
