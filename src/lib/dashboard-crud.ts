@@ -167,7 +167,7 @@ export async function createProfile(profile: Omit<DashboardProfile, "id">): Prom
     if (user) {
       const { data, error } = await db
         .from("profiles")
-        .insert({ user_id: user.id, username: profile.username, full_name: profile.full_name, position: profile.position, company: profile.company, bio: profile.bio, avatar_url: profile.avatar_url })
+        .insert({ user_id: user.id, username: profile.username, full_name: profile.full_name, position: profile.position, company: profile.company, bio: profile.bio, avatar_url: profile.avatar_url, mobile_no: profile.mobile_no })
         .select("id")
         .single();
       if (data && !error) {
@@ -201,6 +201,7 @@ export async function updateProfile(profile: DashboardProfile): Promise<Dashboar
         company: profile.company,
         bio: profile.bio,
         avatar_url: profile.avatar_url,
+        mobile_no: profile.mobile_no,
       }).eq("user_id", user.id);
       await db.from("social_links").delete().eq("profile_id", profile.id);
       if (profile.social_links.length) {
