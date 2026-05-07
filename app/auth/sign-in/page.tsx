@@ -25,7 +25,7 @@ export default function SignInPage() {
     if (!supabase) return;
     await supabase.auth.signInWithOtp({
       email: values.email,
-      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=%2Fdashboard` },
     });
   };
 
@@ -33,7 +33,7 @@ export default function SignInPage() {
     if (!supabase) return;
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=%2Fdashboard` },
     });
   };
 

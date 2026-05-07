@@ -93,7 +93,7 @@ export default function LoginPage() {
     setMessage("");
     const { error } = await supabase.auth.signInWithOtp({
       email: values.email,
-      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=%2Fdashboard` },
     });
     if (error) {
       setStatus("error");
@@ -109,7 +109,7 @@ export default function LoginPage() {
     setGoogleLoading(true);
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=%2Fdashboard` },
     });
     setGoogleLoading(false);
   }

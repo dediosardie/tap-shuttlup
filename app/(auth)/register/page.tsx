@@ -134,7 +134,7 @@ export default function RegisterPage() {
       password: values.password,
       options: {
         data: { full_name: values.full_name },
-        emailRedirectTo: `${window.location.origin}/onboarding`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=%2Fonboarding`,
       },
     });
 
@@ -162,7 +162,7 @@ export default function RegisterPage() {
     setGoogleLoading(true);
     await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/onboarding` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=%2Fonboarding` },
     });
     setGoogleLoading(false);
   }
