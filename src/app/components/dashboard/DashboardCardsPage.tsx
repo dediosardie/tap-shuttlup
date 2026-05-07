@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BadgeCheck, Copy, CreditCard, Pencil, Plus, QrCode, Trash2, Wifi, XCircle } from "lucide-react";
+import { BadgeCheck, Copy, CreditCard, Download, Pencil, Plus, QrCode, Trash2, Wifi, XCircle } from "lucide-react";
 import { DashboardShell } from "@/app/components/dashboard/DashboardShell";
 import { createCard, deleteCard, readCards, updateCard, type DashboardCard } from "@/lib/dashboard-crud";
 import type { ModeType } from "@/lib/types";
@@ -8,6 +8,7 @@ export function DashboardCardsPage() {
   const [cards, setCards] = useState<DashboardCard[]>([]);
   const [copiedUid, setCopiedUid] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [qrCardId, setQrCardId] = useState<string | null>(null);
   const [form, setForm] = useState({ uid: "", shortcode: "", mode: "fleet" as ModeType });
 
   useEffect(() => {
@@ -60,12 +61,6 @@ export function DashboardCardsPage() {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-[var(--text-muted)]">{cards.length} cards registered</p>
         <div className="flex gap-2">
-          <button
-            type="button"
-            className="flex items-center gap-2 rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-4 py-2 text-sm text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
-          >
-            <QrCode className="h-4 w-4" /> Generate QR
-          </button>
           <button
             type="button"
             onClick={handleCreate}
@@ -154,7 +149,15 @@ export function DashboardCardsPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setEditingId((v) => (v === card.id ? null : card.id))}
+                onClick={() => { setQrCardId((v) => (v === card.id ? null : card.id)); setEditingId(null); }}
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--accent-color)]"
+                title="Generate QR"
+              >
+                <QrCode className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => { setEditingId((v) => (v === card.id ? null : card.id)); setQrCardId(null); }}
                 className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 title="Edit card"
               >
@@ -204,6 +207,31 @@ export function DashboardCardsPage() {
                 </select>
               </div>
             ) : null}
+
+            {qrCardId === card.id ? (() => {
+              const tapUrl = `https://tap.shuttlup.com/t/${card.shortcode}`;
+              const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&color=F97316&bgcolor=121212&data=${encodeURIComponent(tapUrl)}`;
+              return (
+                <div className="flex w-full flex-col items-center gap-4 rounded-2xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] p-5 sm:flex-row">
+                  <div className="rounded-xl border border-[var(--border-muted)] bg-[var(--bg-secondary)] p-2">
+                    <img src={qrSrc} alt={`QR for ${card.shortcode}`} width={120} height={120} className="rounded-lg" />
+                  </div>
+                  <div className="flex-1 space-y-2 text-center sm:text-left">
+                    <p className="text-sm font-semibold text-[var(--text-primary)]">{card.uid}</p>
+                    <p className="font-mono text-xs text-[var(--text-muted)]">{tapUrl}</p>
+                    <a
+                      href={`https://api.qrserver.com/v1/create-qr-code/?size=600x600&color=F97316&bgcolor=121212&data=${encodeURIComponent(tapUrl)}`}
+                      download={`qr-${card.shortcode}.png`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl bg-[var(--accent-color)] px-4 py-2 text-xs font-medium text-white hover:bg-[var(--accent-hover)]"
+                    >
+                      <Download className="h-3.5 w-3.5" /> Download QR
+                    </a>
+                  </div>
+                </div>
+              );
+            })() : null}
           </div>
         ))}
       </div>
