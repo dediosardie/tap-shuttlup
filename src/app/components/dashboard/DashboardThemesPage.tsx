@@ -50,18 +50,38 @@ const layouts = [
 
 export function DashboardThemesPage() {
   const [themes, setThemes] = useState<DashboardTheme[]>([]);
+  const [activeKey, setActiveKey] = useState<string>("obsidian");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newTheme, setNewTheme] = useState({ label: "", theme_key: "custom", layout: "spacious" as DashboardTheme["layout"] });
 
   useEffect(() => {
-    void readThemes().then(setThemes);
+    void readThemes().then((loaded) => {
+      setThemes(loaded);
+      const active = loaded.find((t) => t.is_active);
+      if (active) setActiveKey(active.theme_key);
+    });
   }, []);
 
-  const selected = themes.find((t) => t.is_active);
+  const selected = themes.find((t) => t.theme_key === activeKey);
+
+  async function activatePreset(presetId: string) {
+    // Find or create the matching theme in state
+    let theme = themes.find((t) => t.theme_key === presetId);
+    if (!theme) {
+      const preset = themePresets.find((p) => p.id === presetId)!;
+      theme = await createTheme({ label: preset.label, theme_key: presetId, layout: "spacious", is_active: false });
+      setThemes((prev) => [theme!, ...prev]);
+    }
+    const next = { ...theme, is_active: true };
+    await updateTheme(next);
+    setActiveKey(presetId);
+    setThemes((prev) => prev.map((t) => ({ ...t, is_active: t.theme_key === presetId })));
+  }
 
   async function setActive(theme: DashboardTheme) {
     const next = { ...theme, is_active: true };
     await updateTheme(next);
+    setActiveKey(theme.theme_key);
     setThemes((prev) => prev.map((t) => ({ ...t, is_active: t.id === theme.id })));
   }
 
@@ -127,89 +147,117 @@ export function DashboardThemesPage() {
       <div className="mb-6">
         <h2 className="mb-3 text-xs uppercase tracking-widest text-[var(--text-muted)]">Color Theme</h2>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {themes.map((theme) => {
-            const preset = themePresets.find((p) => p.id === theme.theme_key);
-            const preview = preset?.preview ?? ["#111111", "#222222", "#f97316"];
-            const description = preset?.description ?? "Custom theme";
+          {themePresets.map((preset) => {
+            const isActive = activeKey === preset.id;
             return (
-            <button
-              key={theme.id}
-              type="button"
-              onClick={() => setActive(theme)}
-              className={`floating-card flex flex-col gap-3 rounded-2xl border p-4 text-left transition-all ${
-                theme.is_active
-                  ? "border-[var(--accent-color)] bg-[var(--accent-soft)]"
-                  : "border-[var(--border-muted)] bg-[var(--bg-secondary)] hover:border-[var(--accent-color)]/30"
-              }`}
-            >
-              <div className="flex gap-1.5">
-                {preview.map((hex) => (
-                  <div
-                    key={hex}
-                    className="h-6 w-6 rounded-lg border border-white/10"
-                    style={{ backgroundColor: hex }}
-                  />
-                ))}
-              </div>
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="text-sm font-medium text-[var(--text-primary)]">{theme.label}</p>
-                  <p className="mt-0.5 text-xs text-[var(--text-muted)]">{description}</p>
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => activatePreset(preset.id)}
+                className={`floating-card flex flex-col gap-3 rounded-2xl border p-4 text-left transition-all ${
+                  isActive
+                    ? "border-[var(--accent-color)] bg-[var(--accent-soft)]"
+                    : "border-[var(--border-muted)] bg-[var(--bg-secondary)] hover:border-[var(--accent-color)]/30"
+                }`}
+              >
+                <div className="flex gap-1.5">
+                  {preset.preview.map((hex) => (
+                    <div
+                      key={hex}
+                      className="h-6 w-6 rounded-lg border border-white/10"
+                      style={{ backgroundColor: hex }}
+                    />
+                  ))}
                 </div>
-                {theme.is_active && <BadgeCheck className="h-4 w-4 shrink-0 text-[var(--accent-color)]" />}
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditingId((v) => (v === theme.id ? null : theme.id));
-                  }}
-                  className="rounded-lg border border-[var(--border-muted)] bg-[var(--bg-elevated)] p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    remove(theme.id);
-                  }}
-                  className="rounded-lg border border-[var(--border-muted)] bg-[var(--bg-elevated)] p-1.5 text-[var(--text-muted)] hover:text-red-400"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-              {editingId === theme.id ? (
-                <div className="grid gap-2">
-                  <input
-                    value={theme.label}
-                    onChange={(e) => updateInline(theme, { label: e.target.value })}
-                    className="rounded-lg border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-2 py-1.5 text-xs text-[var(--text-primary)]"
-                  />
-                  <select
-                    value={theme.layout}
-                    onChange={(e) => updateInline(theme, { layout: e.target.value as DashboardTheme["layout"] })}
-                    className="rounded-lg border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-2 py-1.5 text-xs text-[var(--text-primary)]"
-                  >
-                    <option value="compact">Compact</option>
-                    <option value="spacious">Spacious</option>
-                    <option value="minimal">Minimal</option>
-                  </select>
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">{preset.label}</p>
+                    <p className="mt-0.5 text-xs text-[var(--text-muted)]">{preset.description}</p>
+                  </div>
+                  {isActive && <BadgeCheck className="h-4 w-4 shrink-0 text-[var(--accent-color)]" />}
                 </div>
-              ) : null}
-            </button>
-          );
+              </button>
+            );
           })}
         </div>
       </div>
 
+      {/* Custom themes */}
+      {themes.filter((t) => !themePresets.some((p) => p.id === t.theme_key)).length > 0 && (
+        <div className="mb-6">
+          <h2 className="mb-3 text-xs uppercase tracking-widest text-[var(--text-muted)]">Custom Themes</h2>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {themes
+              .filter((t) => !themePresets.some((p) => p.id === t.theme_key))
+              .map((theme) => (
+              <button
+                key={theme.id}
+                type="button"
+                onClick={() => setActive(theme)}
+                className={`floating-card flex flex-col gap-3 rounded-2xl border p-4 text-left transition-all ${
+                  theme.theme_key === activeKey
+                    ? "border-[var(--accent-color)] bg-[var(--accent-soft)]"
+                    : "border-[var(--border-muted)] bg-[var(--bg-secondary)] hover:border-[var(--accent-color)]/30"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">{theme.label}</p>
+                    <p className="mt-0.5 text-xs text-[var(--text-muted)]">key: {theme.theme_key}</p>
+                  </div>
+                  {theme.theme_key === activeKey && <BadgeCheck className="h-4 w-4 shrink-0 text-[var(--accent-color)]" />}
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingId((v) => (v === theme.id ? null : theme.id));
+                    }}
+                    className="rounded-lg border border-[var(--border-muted)] bg-[var(--bg-elevated)] p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      remove(theme.id);
+                    }}
+                    className="rounded-lg border border-[var(--border-muted)] bg-[var(--bg-elevated)] p-1.5 text-[var(--text-muted)] hover:text-red-400"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                {editingId === theme.id ? (
+                  <div className="grid gap-2">
+                    <input
+                      value={theme.label}
+                      onChange={(e) => updateInline(theme, { label: e.target.value })}
+                      className="rounded-lg border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-2 py-1.5 text-xs text-[var(--text-primary)]"
+                    />
+                    <select
+                      value={theme.layout}
+                      onChange={(e) => updateInline(theme, { layout: e.target.value as DashboardTheme["layout"] })}
+                      className="rounded-lg border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-2 py-1.5 text-xs text-[var(--text-primary)]"
+                    >
+                      <option value="compact">Compact</option>
+                      <option value="spacious">Spacious</option>
+                      <option value="minimal">Minimal</option>
+                    </select>
+                  </div>
+                ) : null}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="mb-4 rounded-2xl border border-[var(--border-muted)] bg-[var(--bg-secondary)] p-4">
         <p className="text-sm text-[var(--text-muted)]">
           Active theme:
-          <span className="ml-1 font-medium text-[var(--text-primary)]">{selected?.label ?? "None"}</span>
-          <span className="ml-2 text-xs text-[var(--text-disabled)]">
-            ({layouts.find((l) => l.id === selected?.layout)?.label ?? "No layout"})
+          <span className="ml-1 font-medium text-[var(--text-primary)]">
+            {themePresets.find((p) => p.id === activeKey)?.label ?? selected?.label ?? activeKey}
           </span>
         </p>
       </div>
