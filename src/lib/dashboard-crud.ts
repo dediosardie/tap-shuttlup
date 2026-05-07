@@ -11,6 +11,7 @@ export type DashboardProfile = {
   company: string;
   bio: string;
   avatar_url?: string | null;
+  mobile_no: string;
   social_links: { platform: string; url: string }[];
 };
 
@@ -138,7 +139,7 @@ export async function readProfile(): Promise<DashboardProfile | null> {
     if (user) {
       const { data } = await db
         .from("profiles")
-        .select("id, username, full_name, position, company, bio, avatar_url, social_links(platform, url)")
+        .select("id, username, full_name, position, company, bio, avatar_url, mobile_no, social_links(platform, url)")
         .eq("user_id", user.id)
         .single();
       if (data) {
@@ -150,6 +151,7 @@ export async function readProfile(): Promise<DashboardProfile | null> {
           company: (data.company as string) ?? "",
           bio: (data.bio as string) ?? "",
           avatar_url: data.avatar_url as string | null,
+          mobile_no: (data.mobile_no as string) ?? "",
           social_links: (data.social_links as { platform: string; url: string }[]) ?? [],
         };
       }
