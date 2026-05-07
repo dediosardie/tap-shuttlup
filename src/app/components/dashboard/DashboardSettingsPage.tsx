@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { BadgeCheck, Eye, Globe, Lock, Plus, Search, Shield, Trash2 } from "lucide-react";
+import { BadgeCheck, Eye, Globe, Lock, Search, Shield, Trash2 } from "lucide-react";
 import { DashboardShell } from "@/app/components/dashboard/DashboardShell";
 import {
   createSettings,
   deleteSettings,
   readSettings,
+  syncActiveTheme,
   updateSettings,
   type DashboardSettings,
 } from "@/lib/dashboard-crud";
@@ -45,12 +46,33 @@ function ToggleRow({
   );
 }
 
+const DEFAULT_SETTINGS: Omit<DashboardSettings, "id"> = {
+  public_profile: true,
+  show_analytics_badges: true,
+  hide_fleet_info: false,
+  allow_search_indexing: true,
+  opengraph_preview: true,
+  rate_limit_taps: true,
+  anti_scraping: true,
+  custom_domain: "",
+};
+
 export function DashboardSettingsPage() {
   const [settings, setSettings] = useState<DashboardSettings | null>(null);
+  const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    void readSettings().then(setSettings);
+    void readSettings().then(async (s) => {
+      if (s) {
+        setSettings(s);
+      } else {
+        // Auto-create defaults — settings should always exist
+        const created = await createSettings(DEFAULT_SETTINGS);
+        setSettings(created);
+      }
+      setLoading(false);
+    });
   }, []);
 
   function patchSettings(patch: Partial<DashboardSettings>) {
@@ -58,47 +80,25 @@ export function DashboardSettingsPage() {
   }
 
   async function handleSave() {
-    if (!settings) {
-      return;
-    }
+    if (!settings) return;
     await updateSettings(settings);
+    // Also persist the currently active theme so settings + theme are in sync
+    const activeThemeKey = localStorage.getItem("shuttlup.active_theme");
+    if (activeThemeKey) await syncActiveTheme(activeThemeKey);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
 
-  async function handleCreate() {
-    const created = await createSettings({
-      public_profile: true,
-      show_analytics_badges: true,
-      hide_fleet_info: false,
-      allow_search_indexing: true,
-      opengraph_preview: true,
-      rate_limit_taps: true,
-      anti_scraping: true,
-      custom_domain: "",
-    });
+  async function handleDelete() {
+    await deleteSettings();
+    const created = await createSettings(DEFAULT_SETTINGS);
     setSettings(created);
   }
 
-  async function handleDelete() {
-    await deleteSettings();
-    setSettings(null);
-  }
-
-  if (!settings) {
+  if (loading || !settings) {
     return (
       <DashboardShell title="Settings">
-        <div className="rounded-2xl border border-[var(--border-muted)] bg-[var(--bg-secondary)] p-6">
-          <p className="mb-3 text-sm text-[var(--text-muted)]">No settings record found.</p>
-          <button
-            type="button"
-            onClick={handleCreate}
-            className="inline-flex items-center gap-2 rounded-xl bg-[var(--accent-color)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--accent-hover)]"
-          >
-            <Plus className="h-4 w-4" />
-            Create Settings
-          </button>
-        </div>
+        <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">Loading settings…</div>
       </DashboardShell>
     );
   }
@@ -210,7 +210,7 @@ export function DashboardSettingsPage() {
           className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-4 py-2.5 text-sm text-[var(--text-muted)] hover:text-red-400"
         >
           <Trash2 className="h-4 w-4" />
-          Delete Settings
+          Reset to Defaults
         </button>
       </div>
     </DashboardShell>

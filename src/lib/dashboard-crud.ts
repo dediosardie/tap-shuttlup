@@ -466,7 +466,7 @@ export async function deleteTheme(id: string): Promise<void> {
   saveState(state);
 }
 
-async function syncActiveTheme(themeKey: string): Promise<void> {
+export async function syncActiveTheme(themeKey: string): Promise<void> {
   // Apply CSS variables immediately so the change is visible before the DB call
   applyTheme(themeKey);
   const db = getViteSupabaseClient();
