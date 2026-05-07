@@ -209,7 +209,7 @@ export function DashboardCardsPage() {
             ) : null}
 
             {qrCardId === card.id ? (() => {
-              const tapUrl = `https://tap.shuttlup.com/qr/${card.shortcode}`;
+              const tapUrl = `https://tap.shuttlup.com/${card.username}?src=qr`;
               const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&color=F97316&bgcolor=121212&data=${encodeURIComponent(tapUrl)}`;
               return (
                 <div className="flex w-full flex-col items-center gap-4 rounded-2xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] p-5 sm:flex-row">

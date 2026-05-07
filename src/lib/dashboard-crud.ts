@@ -20,6 +20,7 @@ export type DashboardCard = {
   id: string;
   uid: string;
   shortcode: string;
+  username: string;
   status: "active" | "inactive";
   taps: number;
   created: string;
@@ -236,12 +237,17 @@ export async function deleteProfile(): Promise<void> {
 export async function readCards(): Promise<DashboardCard[]> {
   const { db, profileId } = await getAuthedProfileId();
   if (db && profileId) {
-    const { data } = await db.from("nfc_cards").select("*").eq("profile_id", profileId).order("created_at", { ascending: false });
+    const [{ data }, { data: profileData }] = await Promise.all([
+      db.from("nfc_cards").select("*").eq("profile_id", profileId).order("created_at", { ascending: false }),
+      db.from("profiles").select("username").eq("id", profileId).single(),
+    ]);
+    const username = (profileData?.username as string) ?? "";
     if (data) {
       return (data as Array<{ id: string; uid: string; shortcode: string; is_active: boolean; tap_count: number; created_at: string; mode_type?: string | null }>).map((c) => ({
         id: c.id,
         uid: c.uid,
         shortcode: c.shortcode,
+        username,
         status: c.is_active ? "active" : "inactive",
         taps: c.tap_count,
         created: formatDate(c.created_at),
@@ -262,10 +268,12 @@ export async function createCard(input: Omit<DashboardCard, "id" | "created" | "
       .single();
     if (data && !error) {
       const row = data as { id: string; uid: string; shortcode: string; is_active: boolean; tap_count: number; created_at: string; mode_type?: string | null };
+      const { data: pData } = await db.from("profiles").select("username").eq("id", profileId).single();
       const card: DashboardCard = {
         id: row.id,
         uid: row.uid,
         shortcode: row.shortcode,
+        username: (pData?.username as string) ?? "",
         status: row.is_active ? "active" : "inactive",
         taps: row.tap_count,
         created: formatDate(row.created_at),
@@ -282,6 +290,7 @@ export async function createCard(input: Omit<DashboardCard, "id" | "created" | "
     id: genId(),
     uid: input.uid,
     shortcode: input.shortcode,
+    username: "",
     mode: input.mode,
     status: input.status,
     taps: 0,
