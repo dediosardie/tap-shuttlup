@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3, CreditCard, Home, Layers, Palette,
   Settings, UserCircle2, Wifi,
 } from "lucide-react";
+import { getSupabaseBrowserClient } from "@/lib/supabase-client";
 import { TapNotificationToast } from "@/components/dashboard/tap-notification-toast";
 
 const navItems = [
@@ -20,6 +22,29 @@ const navItems = [
 
 export function DashboardShell({ title, children }: { title: string; children: React.ReactNode }) {
   const pathname = usePathname();
+  const [publicProfileHref, setPublicProfileHref] = useState<string>("/tap/demo");
+
+  useEffect(() => {
+    async function loadPublicProfileHref() {
+      const supabase = getSupabaseBrowserClient();
+      if (!supabase) return;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (data?.username) {
+        setPublicProfileHref(`/${data.username}`);
+      }
+    }
+
+    void loadPublicProfileHref();
+  }, []);
 
   return (
     <div className="animated-grid-bg min-h-screen px-4 py-8 md:px-8">
@@ -80,7 +105,7 @@ export function DashboardShell({ title, children }: { title: string; children: R
           {/* View public profile link */}
           <div className="mt-3 px-1">
             <Link
-              href="/ardie"
+              href={publicProfileHref}
               target="_blank"
               className="flex items-center gap-2 rounded-xl px-2 py-2 text-xs text-[var(--text-disabled)] hover:text-[var(--text-muted)] transition-colors"
             >

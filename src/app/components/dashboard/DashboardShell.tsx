@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router";
 import {
   BarChart3, CreditCard, Home, Layers, Palette,
   Settings, UserCircle2, Wifi,
 } from "lucide-react";
 import { TapNotificationToast } from "@/app/components/dashboard/TapNotificationToast";
+import { getAuthedUsername } from "@/lib/public-profile";
 
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: Home, exact: true },
@@ -23,6 +25,18 @@ export function DashboardShell({
   children: React.ReactNode;
 }) {
   const { pathname } = useLocation();
+  const [publicProfileHref, setPublicProfileHref] = useState("/tap/demo");
+
+  useEffect(() => {
+    async function loadPublicProfileHref() {
+      const username = await getAuthedUsername();
+      if (username) {
+        setPublicProfileHref(`/${username}`);
+      }
+    }
+
+    void loadPublicProfileHref();
+  }, []);
 
   return (
     <div className="animated-grid-bg min-h-screen px-4 py-8 md:px-8">
@@ -78,7 +92,7 @@ export function DashboardShell({
 
           <div className="mt-3 px-1">
             <Link
-              to="/ardie"
+              to={publicProfileHref}
               target="_blank"
               className="flex items-center gap-2 rounded-xl px-2 py-2 text-xs text-[var(--text-disabled)] transition-colors hover:text-[var(--text-muted)]"
             >
