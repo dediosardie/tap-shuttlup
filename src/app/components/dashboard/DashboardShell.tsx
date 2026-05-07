@@ -25,7 +25,7 @@ export function DashboardShell({
   children: React.ReactNode;
 }) {
   const { pathname } = useLocation();
-  const [publicProfileHref, setPublicProfileHref] = useState("/tap/demo");
+  const [publicProfileHref, setPublicProfileHref] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadPublicProfileHref() {
@@ -91,14 +91,21 @@ export function DashboardShell({
           <div className="mt-4 h-px bg-[var(--border-muted)]" />
 
           <div className="mt-3 px-1">
-            <Link
-              to={publicProfileHref}
-              target="_blank"
-              className="flex items-center gap-2 rounded-xl px-2 py-2 text-xs text-[var(--text-disabled)] transition-colors hover:text-[var(--text-muted)]"
-            >
-              <Wifi className="h-3.5 w-3.5" />
-              View public card
-            </Link>
+            {publicProfileHref ? (
+              <Link
+                to={publicProfileHref}
+                target="_blank"
+                className="flex items-center gap-2 rounded-xl px-2 py-2 text-xs text-[var(--text-disabled)] transition-colors hover:text-[var(--text-muted)]"
+              >
+                <Wifi className="h-3.5 w-3.5" />
+                View public card
+              </Link>
+            ) : (
+              <span className="flex items-center gap-2 rounded-xl px-2 py-2 text-xs text-[var(--text-disabled)]/70">
+                <Wifi className="h-3.5 w-3.5" />
+                Public card unavailable
+              </span>
+            )}
           </div>
         </aside>
 
