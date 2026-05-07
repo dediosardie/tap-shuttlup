@@ -129,7 +129,7 @@ export async function getAuthedUsername(): Promise<string | null> {
   return data?.username ?? null;
 }
 
-async function insertAnalyticsEvent(cardId: string, source: AccessSource): Promise<void> {
+async function insertAnalyticsEvent(cardId: string, source: AccessSource, coords?: GeolocationCoordinates | null): Promise<void> {
   const db = getViteSupabaseClient();
   if (!db) return;
 
@@ -153,6 +153,8 @@ async function insertAnalyticsEvent(cardId: string, source: AccessSource): Promi
             ? "macOS"
             : "Other",
     referrer: source,
+    latitude: coords?.latitude ?? null,
+    longitude: coords?.longitude ?? null,
   });
 }
 
@@ -162,7 +164,7 @@ async function incrementTapCount(cardId: string, tapCount: number): Promise<void
   await db.from("nfc_cards").update({ tap_count: tapCount + 1 }).eq("id", cardId);
 }
 
-export async function recordShortcodeAccess(shortcode: string, source: AccessSource): Promise<void> {
+export async function recordShortcodeAccess(shortcode: string, source: AccessSource, coords?: GeolocationCoordinates | null): Promise<void> {
   const db = getViteSupabaseClient();
   if (!db) return;
 
@@ -178,11 +180,11 @@ export async function recordShortcodeAccess(shortcode: string, source: AccessSou
 
   if (!card || !card.is_active) return;
 
-  await insertAnalyticsEvent(card.id as string, source);
+  await insertAnalyticsEvent(card.id as string, source, coords);
   await incrementTapCount(card.id as string, (card.tap_count as number | null) ?? 0);
 }
 
-export async function recordUsernameAccess(username: string, source: AccessSource): Promise<void> {
+export async function recordUsernameAccess(username: string, source: AccessSource, coords?: GeolocationCoordinates | null): Promise<void> {
   const db = getViteSupabaseClient();
   if (!db) return;
 
@@ -218,6 +220,6 @@ export async function recordUsernameAccess(username: string, source: AccessSourc
 
   if (!resolvedCard) return;
 
-  await insertAnalyticsEvent(resolvedCard.id, source);
+  await insertAnalyticsEvent(resolvedCard.id, source, coords);
   await incrementTapCount(resolvedCard.id, resolvedCard.tap_count ?? 0);
 }

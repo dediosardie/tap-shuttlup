@@ -3,7 +3,8 @@ import { useParams, useNavigate, Link } from "react-router";
 import { Helmet } from "react-helmet-async";
 import { BadgeCheck, Download, QrCode, Wifi } from "lucide-react";
 import type { PublicProfile } from "@/lib/types";
-import { getAuthedUsername, getPublicProfileByUsername } from "@/lib/public-profile";
+import { getAuthedUsername, getPublicProfileByUsername, recordUsernameAccess } from "@/lib/public-profile";
+import { requestLocation } from "@/lib/geolocation";
 
 export function QrPage() {
   const { username = "" } = useParams<{ username: string }>();
@@ -26,6 +27,8 @@ export function QrPage() {
           return;
         }
         setProfile(resolved);
+        const coords = await requestLocation();
+        await recordUsernameAccess(resolved.username, "qr", coords);
         setLoading(false);
         return;
       }

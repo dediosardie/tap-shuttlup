@@ -103,7 +103,7 @@ export function PublicProfileView({ profile }: { profile: PublicProfile }) {
                 <div className="mt-1">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-medium text-[var(--accent-color)]">
                     <BadgeCheck className="h-3.5 w-3.5" />
-                    Fleet Verified Profile
+                    Verified Profile
                   </span>
                 </div>
               )}

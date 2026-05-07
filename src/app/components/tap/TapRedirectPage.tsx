@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { Wifi } from "lucide-react";
 import { getPublicProfileByShortcode, recordShortcodeAccess } from "@/lib/public-profile";
+import { requestLocation } from "@/lib/geolocation";
 
 export function TapRedirectPage() {
   const { shortcode = "" } = useParams<{ shortcode: string }>();
@@ -19,7 +20,8 @@ export function TapRedirectPage() {
       if (!active) return;
 
       if (profile) {
-        await recordShortcodeAccess(normalizedShortcode, "tap");
+        const coords = await requestLocation();
+        await recordShortcodeAccess(normalizedShortcode, "tap", coords);
         navigate(`/${profile.username}?src=tap`, { replace: true });
       } else {
         setStatus("not-found");

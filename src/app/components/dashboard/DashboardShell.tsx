@@ -3,6 +3,7 @@ import {
   BarChart3, CreditCard, Home, Layers, Palette,
   Settings, UserCircle2, Wifi,
 } from "lucide-react";
+import { TapNotificationToast } from "@/app/components/dashboard/TapNotificationToast";
 
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: Home, exact: true },
@@ -95,6 +96,7 @@ export function DashboardShell({
           {children}
         </main>
       </div>
+      <TapNotificationToast />
     </div>
   );
 }

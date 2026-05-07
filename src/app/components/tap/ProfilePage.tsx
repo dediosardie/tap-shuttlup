@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { PublicProfileView } from "@/app/components/tap/PublicProfileView";
 import type { PublicProfile } from "@/lib/types";
 import { getAuthedUsername, getPublicProfileByUsername, recordUsernameAccess } from "@/lib/public-profile";
+import { requestLocation } from "@/lib/geolocation";
 
 export function ProfilePage() {
   const { username = "" } = useParams<{ username: string }>();
@@ -28,10 +29,11 @@ export function ProfilePage() {
         }
         setProfile(resolved);
         const src = new URLSearchParams(location.search).get("src");
+        const coords = await requestLocation();
         if (src === "qr") {
-          await recordUsernameAccess(resolved.username, "qr");
+          await recordUsernameAccess(resolved.username, "qr", coords);
         } else if (src !== "tap") {
-          await recordUsernameAccess(resolved.username, "direct");
+          await recordUsernameAccess(resolved.username, "direct", coords);
         }
         setLoading(false);
         return;
