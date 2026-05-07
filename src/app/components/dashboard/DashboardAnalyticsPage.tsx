@@ -112,7 +112,7 @@ export function DashboardAnalyticsPage() {
     if (!form.city || !form.device) {
       return;
     }
-    const created = await createAnalyticsEvent(form);
+    const created = await createAnalyticsEvent({ ...form, country: "", latitude: null, longitude: null });
     setEvents((prev) => [created, ...prev]);
     setForm({ source: "nfc", city: "", device: "", referrer: "" });
   }
