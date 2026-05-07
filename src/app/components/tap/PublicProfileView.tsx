@@ -140,25 +140,39 @@ export function PublicProfileView({ profile }: { profile: PublicProfile }) {
               {
                 label: "Call",
                 icon: Phone,
-                href: profile.social_links.find((l) => l.platform === "phone")?.url ?? "#",
+                href: profile.mobile_no
+                  ? `tel:${profile.mobile_no}`
+                  : profile.social_links.find((l) => l.platform === "phone")?.url
+                    ? `tel:${profile.social_links.find((l) => l.platform === "phone")?.url}`
+                    : undefined,
               },
               {
                 label: "Email",
                 icon: Mail,
-                href: profile.social_links.find((l) => l.platform === "email")?.url
-                  ? `mailto:${profile.social_links.find((l) => l.platform === "email")?.url}`
-                  : "#",
+                href: profile.email
+                  ? `mailto:${profile.email}`
+                  : profile.social_links.find((l) => l.platform === "email")?.url
+                    ? `mailto:${profile.social_links.find((l) => l.platform === "email")?.url}`
+                    : undefined,
               },
               {
                 label: "Website",
                 icon: Globe,
-                href: profile.social_links.find((l) => l.platform === "website")?.url ?? "#",
+                href: profile.social_links.find((l) => l.platform === "website")?.url ?? undefined,
                 external: true,
               },
-              { label: "Message", icon: MessageCircle, href: "#" },
+              {
+                label: "Message",
+                icon: MessageCircle,
+                href: profile.mobile_no
+                  ? `sms:${profile.mobile_no}`
+                  : profile.social_links.find((l) => l.platform === "phone")?.url
+                    ? `sms:${profile.social_links.find((l) => l.platform === "phone")?.url}`
+                    : undefined,
+              },
               { label: "Share", icon: Share2, onClick: handleShare },
             ].map(({ label, icon: Icon, href, external, onClick }) =>
-              href && href !== "#" && !onClick ? (
+              href && !onClick ? (
                 <a
                   key={label}
                   href={href}
@@ -173,7 +187,8 @@ export function PublicProfileView({ profile }: { profile: PublicProfile }) {
                   key={label}
                   type="button"
                   onClick={onClick}
-                  className="floating-card flex flex-col items-center gap-2 rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-2 py-3 text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
+                  disabled={!onClick}
+                  className="floating-card flex flex-col items-center gap-2 rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-2 py-3 text-xs text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Icon className="h-5 w-5 text-[var(--accent-color)]" />
                   {label}
