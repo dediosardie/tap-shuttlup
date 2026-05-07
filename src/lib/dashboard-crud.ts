@@ -234,14 +234,14 @@ export async function readCards(): Promise<DashboardCard[]> {
   if (db && profileId) {
     const { data } = await db.from("nfc_cards").select("*").eq("profile_id", profileId).order("created_at", { ascending: false });
     if (data) {
-      return (data as Array<{ id: string; uid: string; shortcode: string; is_active: boolean; tap_count: number; created_at: string }>).map((c) => ({
+      return (data as Array<{ id: string; uid: string; shortcode: string; is_active: boolean; tap_count: number; created_at: string; mode_type?: string | null }>).map((c) => ({
         id: c.id,
         uid: c.uid,
         shortcode: c.shortcode,
         status: c.is_active ? "active" : "inactive",
         taps: c.tap_count,
         created: formatDate(c.created_at),
-        mode: "fleet" as ModeType,
+        mode: (c.mode_type as ModeType | null) ?? "fleet",
       }));
     }
   }
@@ -253,11 +253,11 @@ export async function createCard(input: Omit<DashboardCard, "id" | "created" | "
   if (db && profileId) {
     const { data, error } = await db
       .from("nfc_cards")
-      .insert({ profile_id: profileId, uid: input.uid, shortcode: input.shortcode, is_active: input.status === "active", tap_count: 0 })
+      .insert({ profile_id: profileId, uid: input.uid, shortcode: input.shortcode, is_active: input.status === "active", tap_count: 0, mode_type: input.mode })
       .select("*")
       .single();
     if (data && !error) {
-      const row = data as { id: string; uid: string; shortcode: string; is_active: boolean; tap_count: number; created_at: string };
+      const row = data as { id: string; uid: string; shortcode: string; is_active: boolean; tap_count: number; created_at: string; mode_type?: string | null };
       const card: DashboardCard = {
         id: row.id,
         uid: row.uid,
@@ -265,7 +265,7 @@ export async function createCard(input: Omit<DashboardCard, "id" | "created" | "
         status: row.is_active ? "active" : "inactive",
         taps: row.tap_count,
         created: formatDate(row.created_at),
-        mode: input.mode,
+        mode: (row.mode_type as ModeType | null) ?? input.mode,
       };
       const state = loadState();
       state.cards = [card, ...state.cards];
@@ -291,7 +291,7 @@ export async function createCard(input: Omit<DashboardCard, "id" | "created" | "
 export async function updateCard(card: DashboardCard): Promise<void> {
   const db = getViteSupabaseClient();
   if (db) {
-    await db.from("nfc_cards").update({ uid: card.uid, shortcode: card.shortcode, is_active: card.status === "active" }).eq("id", card.id);
+    await db.from("nfc_cards").update({ uid: card.uid, shortcode: card.shortcode, is_active: card.status === "active", mode_type: card.mode }).eq("id", card.id);
   }
   const state = loadState();
   state.cards = state.cards.map((c) => (c.id === card.id ? card : c));
