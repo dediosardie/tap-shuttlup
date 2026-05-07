@@ -70,7 +70,9 @@ function mapProfileRow(
   profile: ProfileRow,
   socialLinks: Array<{ platform: string; url: string }> | null,
   fleetInfo: { vehicle_type: string | null; plate_number: string | null; operator_id: string | null; verified: boolean } | null,
-  cards: Array<{ tap_count: number | null }> | null,
+  cards: Array<{ id: string; tap_count: number | null }> | null,
+  viewsCount: number,
+  savesCount: number,
 ): PublicProfile {
   const taps = (cards ?? []).reduce((sum, card) => sum + (card.tap_count ?? 0), 0);
 
@@ -98,8 +100,8 @@ function mapProfileRow(
       : null,
     metrics: {
       taps,
-      views: 0,
-      saves: 0,
+      views: viewsCount,
+      saves: savesCount,
     },
   };
 }
@@ -117,10 +119,19 @@ async function getPublicProfileById(profileId: string): Promise<PublicProfile | 
   const [{ data: socialLinks }, { data: fleetInfo }, { data: cards }] = await Promise.all([
     supabase.from("social_links").select("platform, url").eq("profile_id", profile.id),
     supabase.from("fleet_info").select("vehicle_type, plate_number, operator_id, verified").eq("profile_id", profile.id).maybeSingle(),
-    supabase.from("nfc_cards").select("tap_count").eq("profile_id", profile.id),
+    supabase.from("nfc_cards").select("id, tap_count").eq("profile_id", profile.id),
   ]);
 
-  return mapProfileRow(profile as ProfileRow, socialLinks, fleetInfo, cards);
+  const cardIds = (cards ?? []).map((c) => c.id).filter(Boolean) as string[];
+
+  const [{ count: viewsCount }, { count: savesCount }] = await Promise.all([
+    cardIds.length
+      ? supabase.from("tap_analytics").select("id", { count: "exact", head: true }).in("card_id", cardIds)
+      : Promise.resolve({ count: 0 } as { count: number | null }),
+    supabase.from("tap_saves").select("id", { count: "exact", head: true }).eq("profile_id", profile.id),
+  ]);
+
+  return mapProfileRow(profile as ProfileRow, socialLinks, fleetInfo, cards as Array<{ id: string; tap_count: number | null }> | null, viewsCount ?? 0, savesCount ?? 0);
 }
 
 export async function getPublicProfileByUsername(username: string): Promise<PublicProfile | null> {

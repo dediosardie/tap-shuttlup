@@ -47,10 +47,18 @@ async function mapProfile(profile: ProfileRow): Promise<PublicProfile> {
   const [{ data: socialLinks }, { data: fleetInfo }, { data: cards }] = await Promise.all([
     db.from("social_links").select("platform, url").eq("profile_id", profile.id),
     db.from("fleet_info").select("vehicle_type, plate_number, operator_id, verified").eq("profile_id", profile.id).maybeSingle(),
-    db.from("nfc_cards").select("tap_count").eq("profile_id", profile.id),
+    db.from("nfc_cards").select("id, tap_count").eq("profile_id", profile.id),
   ]);
 
   const taps = (cards ?? []).reduce((sum, card) => sum + (card.tap_count ?? 0), 0);
+  const cardIds = (cards ?? []).map((c) => c.id).filter(Boolean) as string[];
+
+  const [{ count: viewsCount }, { count: savesCount }] = await Promise.all([
+    cardIds.length
+      ? db.from("tap_analytics").select("id", { count: "exact", head: true }).in("card_id", cardIds)
+      : Promise.resolve({ count: 0 } as { count: number | null }),
+    db.from("tap_saves").select("id", { count: "exact", head: true }).eq("profile_id", profile.id),
+  ]);
 
   return {
     id: profile.id,
@@ -76,8 +84,8 @@ async function mapProfile(profile: ProfileRow): Promise<PublicProfile> {
       : null,
     metrics: {
       taps,
-      views: 0,
-      saves: 0,
+      views: viewsCount ?? 0,
+      saves: savesCount ?? 0,
     },
   };
 }
