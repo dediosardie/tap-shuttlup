@@ -1,5 +1,6 @@
 import type { ModeType } from "@/lib/types";
 import { getViteSupabaseClient } from "@/lib/supabase";
+import { applyTheme } from "@/lib/themes";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -396,21 +397,44 @@ export async function deleteMode(id: string): Promise<void> {
 }
 
 // ─── Themes CRUD ──────────────────────────────────────────────────────────────
-// Custom themes stored in localStorage; active theme key synced to profiles.theme
+// Built-in theme presets — seeded into localStorage if empty
+
+const DEFAULT_THEMES: DashboardTheme[] = [
+  { id: "obsidian", label: "Obsidian Orange", theme_key: "obsidian", layout: "spacious", is_active: true },
+  { id: "midnight", label: "Midnight Blue", theme_key: "midnight", layout: "spacious", is_active: false },
+  { id: "graphite", label: "Graphite Glass", theme_key: "graphite", layout: "spacious", is_active: false },
+  { id: "forest", label: "Forest Emerald", theme_key: "forest", layout: "spacious", is_active: false },
+  { id: "violet", label: "Violet Dark", theme_key: "violet", layout: "spacious", is_active: false },
+  { id: "carbon", label: "Carbon Amber", theme_key: "carbon", layout: "spacious", is_active: false },
+];
 
 export async function readThemes(): Promise<DashboardTheme[]> {
   const db = getViteSupabaseClient();
   const state = loadState();
+
+  // Seed built-in presets if localStorage is empty
+  if (state.themes.length === 0) {
+    state.themes = DEFAULT_THEMES;
+    saveState(state);
+  }
+
+  let activeKey = state.themes.find((t) => t.is_active)?.theme_key ?? "obsidian";
+
   if (db) {
     const { data: { user } } = await db.auth.getUser();
     if (user) {
       const { data } = await db.from("profiles").select("theme").eq("user_id", user.id).single();
       if (data?.theme) {
-        state.themes = state.themes.map((t) => ({ ...t, is_active: t.theme_key === (data.theme as string) }));
+        activeKey = data.theme as string;
+        state.themes = state.themes.map((t) => ({ ...t, is_active: t.theme_key === activeKey }));
         saveState(state);
       }
     }
   }
+
+  // Apply CSS variables for the active theme immediately
+  applyTheme(activeKey);
+
   return state.themes;
 }
 
@@ -443,6 +467,8 @@ export async function deleteTheme(id: string): Promise<void> {
 }
 
 async function syncActiveTheme(themeKey: string): Promise<void> {
+  // Apply CSS variables immediately so the change is visible before the DB call
+  applyTheme(themeKey);
   const db = getViteSupabaseClient();
   if (!db) return;
   const { data: { user } } = await db.auth.getUser();
@@ -452,31 +478,66 @@ async function syncActiveTheme(themeKey: string): Promise<void> {
 }
 
 // ─── Settings CRUD ────────────────────────────────────────────────────────────
-// No dedicated DB table — stored in localStorage only
+// Primary store: profiles.settings (JSONB) in Supabase; localStorage as fallback
 
-export function readSettings(): DashboardSettings | null {
+export async function readSettings(): Promise<DashboardSettings | null> {
+  const db = getViteSupabaseClient();
+  if (db) {
+    const { data: { user } } = await db.auth.getUser();
+    if (user) {
+      const { data } = await db.from("profiles").select("settings").eq("user_id", user.id).single();
+      if (data?.settings) {
+        const s = data.settings as DashboardSettings;
+        const state = loadState();
+        state.settings = s;
+        saveState(state);
+        return s;
+      }
+    }
+  }
   return loadState().settings;
 }
 
-export function createSettings(settings: Omit<DashboardSettings, "id">): DashboardSettings {
-  const state = loadState();
+export async function createSettings(settings: Omit<DashboardSettings, "id">): Promise<DashboardSettings> {
   const next: DashboardSettings = { ...settings, id: genId() };
+  const state = loadState();
   state.settings = next;
   saveState(state);
+  const db = getViteSupabaseClient();
+  if (db) {
+    const { data: { user } } = await db.auth.getUser();
+    if (user) {
+      await db.from("profiles").update({ settings: next }).eq("user_id", user.id);
+    }
+  }
   return next;
 }
 
-export function updateSettings(settings: DashboardSettings): DashboardSettings {
+export async function updateSettings(settings: DashboardSettings): Promise<DashboardSettings> {
   const state = loadState();
   state.settings = settings;
   saveState(state);
+  const db = getViteSupabaseClient();
+  if (db) {
+    const { data: { user } } = await db.auth.getUser();
+    if (user) {
+      await db.from("profiles").update({ settings }).eq("user_id", user.id);
+    }
+  }
   return settings;
 }
 
-export function deleteSettings(): void {
+export async function deleteSettings(): Promise<void> {
   const state = loadState();
   state.settings = null;
   saveState(state);
+  const db = getViteSupabaseClient();
+  if (db) {
+    const { data: { user } } = await db.auth.getUser();
+    if (user) {
+      await db.from("profiles").update({ settings: null }).eq("user_id", user.id);
+    }
+  }
 }
 
 // ─── Analytics CRUD ───────────────────────────────────────────────────────────
