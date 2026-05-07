@@ -12,6 +12,7 @@ type ProfileRow = {
   bio: string | null;
   avatar_url: string | null;
   mobile_no: string | null;
+  email: string | null;
   verified: boolean;
   theme: string | null;
 };
@@ -28,6 +29,7 @@ async function mapProfile(profile: ProfileRow): Promise<PublicProfile> {
       bio: profile.bio ?? "",
       avatar_url: profile.avatar_url ?? null,
       mobile_no: profile.mobile_no ?? null,
+      email: profile.email ?? null,
       verified: profile.verified ?? false,
       theme: profile.theme ?? "obsidian",
       social_links: [],
@@ -53,6 +55,7 @@ async function mapProfile(profile: ProfileRow): Promise<PublicProfile> {
     bio: profile.bio ?? "",
     avatar_url: profile.avatar_url ?? null,
     mobile_no: profile.mobile_no ?? null,
+    email: profile.email ?? null,
     verified: profile.verified ?? false,
     theme: profile.theme ?? "obsidian",
     social_links: (socialLinks ?? []).map((link) => ({ platform: link.platform, url: link.url })),
@@ -78,7 +81,7 @@ export async function getPublicProfileByUsername(username: string): Promise<Publ
 
   const { data: profile } = await db
     .from("profiles")
-    .select("id, username, full_name, position, company, bio, avatar_url, mobile_no, verified, theme")
+    .select("id, username, full_name, position, company, bio, avatar_url, mobile_no, email, verified, theme")
     .ilike("username", username)
     .limit(1)
     .maybeSingle();
@@ -105,7 +108,7 @@ export async function getPublicProfileByShortcode(shortcode: string): Promise<Pu
 
   const { data: profile } = await db
     .from("profiles")
-    .select("id, username, full_name, position, company, bio, avatar_url, mobile_no, verified, theme")
+    .select("id, username, full_name, position, company, bio, avatar_url, mobile_no, email, verified, theme")
     .eq("id", card.profile_id)
     .maybeSingle();
 

@@ -35,6 +35,7 @@ export function DashboardProfilePage() {
       bio: "Short profile bio",
       avatar_url: null,
       mobile_no: "",
+      email: "",
       social_links: [
         { platform: "linkedin", url: "" },
         { platform: "instagram", url: "" },
@@ -151,6 +152,24 @@ export function DashboardProfilePage() {
             value={profile.mobile_no ?? ""}
             onChange={(e) => setField("mobile_no" as keyof DashboardProfile, e.target.value as never)}
             placeholder="+63 912 345 6789"
+            className="w-full rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-disabled)] outline-none focus:border-[var(--accent-color)] focus:ring-1 focus:ring-[var(--accent-color)] transition-colors"
+          />
+        </div>
+
+        {/* Email */}
+        <div className="space-y-1.5">
+          <label
+            htmlFor="email"
+            className="text-xs uppercase tracking-widest text-[var(--text-muted)]"
+          >
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={profile.email ?? ""}
+            onChange={(e) => setField("email" as keyof DashboardProfile, e.target.value as never)}
+            placeholder="you@example.com"
             className="w-full rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-disabled)] outline-none focus:border-[var(--accent-color)] focus:ring-1 focus:ring-[var(--accent-color)] transition-colors"
           />
         </div>

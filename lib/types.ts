@@ -8,6 +8,8 @@ export type PublicProfile = {
   company: string;
   bio: string;
   avatar_url?: string | null;
+  mobile_no?: string | null;
+  email?: string | null;
   verified: boolean;
   theme: string;
   social_links: { platform: string; url: string }[];

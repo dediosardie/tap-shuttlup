@@ -9,6 +9,7 @@ export function buildVCard(profile: PublicProfile) {
     `TITLE:${profile.position}`,
     `NOTE:${profile.bio}`,
     profile.mobile_no ? `TEL;TYPE=CELL:${profile.mobile_no}` : "",
+    profile.email ? `EMAIL:${profile.email}` : "",
     profile.social_links.find((x) => x.platform === "website")?.url
       ? `URL:${profile.social_links.find((x) => x.platform === "website")?.url}`
       : "",

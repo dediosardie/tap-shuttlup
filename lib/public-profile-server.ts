@@ -12,6 +12,7 @@ type ProfileRow = {
   bio: string | null;
   avatar_url: string | null;
   mobile_no: string | null;
+  email: string | null;
   verified: boolean;
   theme: string | null;
 };
@@ -77,6 +78,7 @@ function mapProfileRow(
     bio: profile.bio ?? "",
     avatar_url: profile.avatar_url ?? null,
     mobile_no: profile.mobile_no ?? null,
+    email: profile.email ?? null,
     verified: profile.verified ?? false,
     theme: profile.theme ?? "obsidian",
     social_links: (socialLinks ?? []).map((l) => ({ platform: l.platform, url: l.url })),
@@ -100,7 +102,7 @@ async function getPublicProfileById(profileId: string): Promise<PublicProfile | 
   const supabase = await getSupabaseServerClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, user_id, username, full_name, position, company, bio, avatar_url, mobile_no, verified, theme")
+    .select("id, user_id, username, full_name, position, company, bio, avatar_url, mobile_no, email, verified, theme")
     .eq("id", profileId)
     .maybeSingle();
 
@@ -119,7 +121,7 @@ export async function getPublicProfileByUsername(username: string): Promise<Publ
   const supabase = await getSupabaseServerClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, user_id, username, full_name, position, company, bio, avatar_url, mobile_no, verified, theme")
+    .select("id, user_id, username, full_name, position, company, bio, avatar_url, mobile_no, email, verified, theme")
     .ilike("username", username)
     .limit(1)
     .maybeSingle();

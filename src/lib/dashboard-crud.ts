@@ -12,6 +12,7 @@ export type DashboardProfile = {
   bio: string;
   avatar_url?: string | null;
   mobile_no: string;
+  email: string;
   social_links: { platform: string; url: string }[];
 };
 
@@ -139,7 +140,7 @@ export async function readProfile(): Promise<DashboardProfile | null> {
     if (user) {
       const { data } = await db
         .from("profiles")
-        .select("id, username, full_name, position, company, bio, avatar_url, mobile_no, social_links(platform, url)")
+        .select("id, username, full_name, position, company, bio, avatar_url, mobile_no, email, social_links(platform, url)")
         .eq("user_id", user.id)
         .single();
       if (data) {
@@ -152,6 +153,7 @@ export async function readProfile(): Promise<DashboardProfile | null> {
           bio: (data.bio as string) ?? "",
           avatar_url: data.avatar_url as string | null,
           mobile_no: (data.mobile_no as string) ?? "",
+          email: (data.email as string) ?? "",
           social_links: (data.social_links as { platform: string; url: string }[]) ?? [],
         };
       }
@@ -167,7 +169,7 @@ export async function createProfile(profile: Omit<DashboardProfile, "id">): Prom
     if (user) {
       const { data, error } = await db
         .from("profiles")
-        .insert({ user_id: user.id, username: profile.username, full_name: profile.full_name, position: profile.position, company: profile.company, bio: profile.bio, avatar_url: profile.avatar_url, mobile_no: profile.mobile_no })
+        .insert({ user_id: user.id, username: profile.username, full_name: profile.full_name, position: profile.position, company: profile.company, bio: profile.bio, avatar_url: profile.avatar_url, mobile_no: profile.mobile_no, email: profile.email })
         .select("id")
         .single();
       if (data && !error) {
@@ -202,6 +204,7 @@ export async function updateProfile(profile: DashboardProfile): Promise<Dashboar
         bio: profile.bio,
         avatar_url: profile.avatar_url,
         mobile_no: profile.mobile_no,
+        email: profile.email,
       }).eq("user_id", user.id);
       await db.from("social_links").delete().eq("profile_id", profile.id);
       if (profile.social_links.length) {
