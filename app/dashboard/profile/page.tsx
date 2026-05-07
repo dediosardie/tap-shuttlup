@@ -155,7 +155,7 @@ export default function DashboardProfilePage() {
           <input
             id="mobile_no"
             type="text"
-            value={(profile as any).mobile_no ?? ""}
+            value={profile.mobile_no ?? ""}
             onChange={(e) => setField("mobile_no" as keyof DashboardProfile, e.target.value as never)}
             placeholder="+63 912 345 6789"
             className="w-full rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-disabled)] outline-none focus:border-[var(--accent-color)] focus:ring-1 focus:ring-[var(--accent-color)] transition-colors"
