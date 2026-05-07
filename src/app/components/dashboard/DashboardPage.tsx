@@ -3,6 +3,7 @@ import { BarChart3, CreditCard, Eye, TrendingUp, Wifi } from "lucide-react";
 import { DashboardShell } from "@/app/components/dashboard/DashboardShell";
 import { AnalyticsChart } from "@/app/components/dashboard/AnalyticsChart";
 import { readCards, readAnalytics, type AnalyticsEvent, type DashboardCard } from "@/lib/dashboard-crud";
+import { reverseGeocode } from "@/lib/reverse-geocode";
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -25,8 +26,34 @@ export function DashboardPage() {
   const [cards, setCards] = useState<DashboardCard[]>([]);
 
   useEffect(() => {
-    void readAnalytics().then(setEvents);
-    void readCards().then(setCards);
+    async function load() {
+      const [rawEvents, rawCards] = await Promise.all([readAnalytics(), readCards()]);
+      setCards(rawCards);
+      setEvents(rawEvents);
+
+      // Resolve coordinates into city/country for events that don't have human-readable location yet.
+      const withCoords = rawEvents.filter(
+        (e) => e.latitude != null && e.longitude != null && !e.city,
+      );
+      if (withCoords.length === 0) return;
+
+      const resolved = await Promise.all(
+        withCoords.map(async (event) => {
+          const geo = await reverseGeocode(event.latitude!, event.longitude!);
+          if (!geo) return event;
+          return {
+            ...event,
+            city: geo.city,
+            country: geo.country,
+          };
+        }),
+      );
+
+      const byId = new Map(resolved.map((event) => [event.id, event]));
+      setEvents((prev) => prev.map((event) => byId.get(event.id) ?? event));
+    }
+
+    void load();
   }, []);
 
   const stats = useMemo(() => {
@@ -90,7 +117,10 @@ export function DashboardPage() {
                   </span>
                   <div>
                     <p className="font-medium text-[var(--text-primary)]">{sourceLabel(event.source)}</p>
-                    <p className="text-xs text-[var(--text-muted)]">{event.city || "Unknown"} · {event.device || "Unknown"}</p>
+                    <p className="text-xs text-[var(--text-muted)]">
+                      {event.city || (event.latitude != null && event.longitude != null ? "Locating..." : "Unknown")}
+                      {event.country ? `, ${event.country}` : ""} · {event.device || "Unknown"}
+                    </p>
                   </div>
                 </div>
                 <span className="text-xs text-[var(--text-disabled)]">{timeAgo(event.created_at)}</span>
