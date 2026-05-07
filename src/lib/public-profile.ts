@@ -15,6 +15,7 @@ type ProfileRow = {
   email: string | null;
   verified: boolean;
   theme: string | null;
+  settings: { hide_fleet_info?: boolean } | null;
 };
 
 async function mapProfile(profile: ProfileRow): Promise<PublicProfile> {
@@ -59,7 +60,7 @@ async function mapProfile(profile: ProfileRow): Promise<PublicProfile> {
     verified: profile.verified ?? false,
     theme: profile.theme ?? "obsidian",
     social_links: (socialLinks ?? []).map((link) => ({ platform: link.platform, url: link.url })),
-    fleet_info: fleetInfo
+    fleet_info: fleetInfo && !profile.settings?.hide_fleet_info
       ? {
           vehicle_type: fleetInfo.vehicle_type ?? undefined,
           plate_number: fleetInfo.plate_number ?? undefined,
@@ -81,7 +82,7 @@ export async function getPublicProfileByUsername(username: string): Promise<Publ
 
   const { data: profile } = await db
     .from("profiles")
-    .select("id, username, full_name, position, company, bio, avatar_url, mobile_no, email, verified, theme")
+    .select("id, username, full_name, position, company, bio, avatar_url, mobile_no, email, verified, theme, settings")
     .ilike("username", username)
     .limit(1)
     .maybeSingle();
@@ -108,7 +109,7 @@ export async function getPublicProfileByShortcode(shortcode: string): Promise<Pu
 
   const { data: profile } = await db
     .from("profiles")
-    .select("id, username, full_name, position, company, bio, avatar_url, mobile_no, email, verified, theme")
+    .select("id, username, full_name, position, company, bio, avatar_url, mobile_no, email, verified, theme, settings")
     .eq("id", card.profile_id)
     .maybeSingle();
 

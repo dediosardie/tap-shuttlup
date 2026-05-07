@@ -15,6 +15,7 @@ type ProfileRow = {
   email: string | null;
   verified: boolean;
   theme: string | null;
+  settings: { hide_fleet_info?: boolean } | null;
 };
 
 type AccessSource = "tap" | "qr" | "direct";
@@ -82,7 +83,7 @@ function mapProfileRow(
     verified: profile.verified ?? false,
     theme: profile.theme ?? "obsidian",
     social_links: (socialLinks ?? []).map((l) => ({ platform: l.platform, url: l.url })),
-    fleet_info: fleetInfo
+    fleet_info: fleetInfo && !profile.settings?.hide_fleet_info
       ? {
           vehicle_type: fleetInfo.vehicle_type ?? undefined,
           plate_number: fleetInfo.plate_number ?? undefined,
@@ -102,7 +103,7 @@ async function getPublicProfileById(profileId: string): Promise<PublicProfile | 
   const supabase = await getSupabaseServerClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, user_id, username, full_name, position, company, bio, avatar_url, mobile_no, email, verified, theme")
+    .select("id, user_id, username, full_name, position, company, bio, avatar_url, mobile_no, email, verified, theme, settings")
     .eq("id", profileId)
     .maybeSingle();
 
@@ -121,7 +122,7 @@ export async function getPublicProfileByUsername(username: string): Promise<Publ
   const supabase = await getSupabaseServerClient();
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, user_id, username, full_name, position, company, bio, avatar_url, mobile_no, email, verified, theme")
+    .select("id, user_id, username, full_name, position, company, bio, avatar_url, mobile_no, email, verified, theme, settings")
     .ilike("username", username)
     .limit(1)
     .maybeSingle();
