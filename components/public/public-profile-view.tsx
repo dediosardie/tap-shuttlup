@@ -232,14 +232,14 @@ export function PublicProfileView({
             className="glass-card p-5"
           >
             <h2 className="mb-3 text-xs uppercase tracking-widest text-[var(--text-muted)]">Projects &amp; Involvement</h2>
-            <div className="overflow-x-auto pb-1">
-              <div className="flex snap-x snap-mandatory gap-3">
+            <div className="space-y-3">
+              <div className="flex flex-col gap-3">
                 {projects.map((project) => {
                   const projectShareBase = `${profileUrl}?project=${project.id}`;
                   const tapSuffix = sourceTokens?.tap ? `&src=tap&st=${encodeURIComponent(sourceTokens.tap)}&via=nfc` : "&src=tap&via=nfc";
                   const qrSuffix = sourceTokens?.qr ? `&src=qr&st=${encodeURIComponent(sourceTokens.qr)}&via=qr` : "&src=qr&via=qr";
                   return (
-                    <div key={project.id} className="glass-card gradient-border min-w-[280px] snap-start rounded-2xl p-4">
+                    <div key={project.id} className="glass-card gradient-border w-full rounded-2xl p-4">
                       <div className="flex items-start gap-3">
                         <div className="h-12 w-12 overflow-hidden rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)]">
                           {project.logo_url ? (

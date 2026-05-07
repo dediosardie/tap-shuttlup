@@ -346,8 +346,8 @@ export function DashboardProfilePage() {
               Add organizations, startups, communities, or businesses you are involved in.
             </div>
           ) : (
-            <div className="overflow-x-auto pb-1">
-              <div className="flex snap-x snap-mandatory gap-3">
+            <div className="space-y-3">
+              <div className="flex flex-col gap-3">
                 {(profile.projects ?? []).map((project) => {
                   const editing = editingProjectId === project.id;
                   const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://tap.shuttlup.com";
@@ -355,7 +355,7 @@ export function DashboardProfilePage() {
                   return (
                     <div
                       key={project.id}
-                      className="glass-card gradient-border min-w-[290px] snap-start space-y-3 rounded-2xl p-4"
+                      className="glass-card gradient-border w-full space-y-3 rounded-2xl p-4"
                     >
                       <div className="flex items-start gap-3">
                         <div className="h-12 w-12 overflow-hidden rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)]">
