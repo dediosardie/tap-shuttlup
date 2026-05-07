@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getPublicProfileByUsername, recordUsernameAccess } from "@/lib/public-profile-server";
 import { absoluteUrl } from "@/lib/utils";
+import { createSourceToken } from "@/lib/source-token";
 import type { Metadata } from "next";
 import { BadgeCheck, Download, QrCode, Wifi } from "lucide-react";
 import { headers } from "next/headers";
@@ -27,7 +28,10 @@ export default async function QrProfilePage({ params }: { params: Promise<{ user
   const requestHeaders = await headers();
   await recordUsernameAccess(profile.username, "qr", requestHeaders);
 
-  const profileUrl = `https://tap.shuttlup.com/${profile.username}?src=qr`;
+  const qrToken = createSourceToken(profile.username, "qr");
+  const profileUrl = qrToken
+    ? `https://tap.shuttlup.com/${profile.username}?src=qr&st=${encodeURIComponent(qrToken)}`
+    : `https://tap.shuttlup.com/${profile.username}?src=qr`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&color=F97316&bgcolor=121212&data=${encodeURIComponent(profileUrl)}`;
 
   return (
@@ -75,7 +79,7 @@ export default async function QrProfilePage({ params }: { params: Promise<{ user
         {/* Action buttons */}
         <div className="grid gap-2">
           <a
-            href={`/${profile.username}`}
+            href={qrToken ? `/${profile.username}?src=qr&st=${encodeURIComponent(qrToken)}` : `/${profile.username}?src=qr`}
             className="premium-button flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold"
           >
             Open Profile

@@ -30,7 +30,15 @@ function MetricBadge({ label, value, icon: Icon }: { label: string; value: numbe
   );
 }
 
-export function PublicProfileView({ profile, visitSource = "direct" }: { profile: PublicProfile; visitSource?: "tap" | "qr" | "direct" }) {
+export function PublicProfileView({
+  profile,
+  visitSource = "direct",
+  sourceTokens,
+}: {
+  profile: PublicProfile;
+  visitSource?: "tap" | "qr" | "direct";
+  sourceTokens?: { tap?: string; qr?: string };
+}) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -228,6 +236,8 @@ export function PublicProfileView({ profile, visitSource = "direct" }: { profile
               <div className="flex snap-x snap-mandatory gap-3">
                 {projects.map((project) => {
                   const projectShareBase = `${profileUrl}?project=${project.id}`;
+                  const tapSuffix = sourceTokens?.tap ? `&src=tap&st=${encodeURIComponent(sourceTokens.tap)}&via=nfc` : "&src=tap&via=nfc";
+                  const qrSuffix = sourceTokens?.qr ? `&src=qr&st=${encodeURIComponent(sourceTokens.qr)}&via=qr` : "&src=qr&via=qr";
                   return (
                     <div key={project.id} className="glass-card gradient-border min-w-[280px] snap-start rounded-2xl p-4">
                       <div className="flex items-start gap-3">
@@ -262,13 +272,13 @@ export function PublicProfileView({ profile, visitSource = "direct" }: { profile
 
                       <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
                         <a
-                          href={`${projectShareBase}&src=tap&via=nfc`}
+                          href={`${projectShareBase}${tapSuffix}`}
                           className="floating-card inline-flex items-center justify-center gap-1 rounded-lg border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-2 py-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                         >
                           <Wifi className="h-3.5 w-3.5 text-[var(--accent-color)]" /> NFC Share
                         </a>
                         <a
-                          href={`${projectShareBase}&src=qr&via=qr`}
+                          href={`${projectShareBase}${qrSuffix}`}
                           className="floating-card inline-flex items-center justify-center gap-1 rounded-lg border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-2 py-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                         >
                           <QrCode className="h-3.5 w-3.5 text-[var(--accent-color)]" /> QR Share

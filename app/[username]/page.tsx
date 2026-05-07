@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { PublicProfileView } from "@/components/public/public-profile-view";
 import { absoluteUrl } from "@/lib/utils";
 import { getAuthedUsername, getPublicProfileByUsername, recordUsernameAccess } from "@/lib/public-profile-server";
+import { createSourceToken, verifySourceToken } from "@/lib/source-token";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 
@@ -26,11 +27,10 @@ export default async function PublicProfilePage({
   searchParams,
 }: {
   params: Promise<{ username: string }>;
-  searchParams: Promise<{ src?: string }>;
+  searchParams: Promise<{ src?: string; st?: string }>;
 }) {
   const { username } = await params;
-  const { src } = await searchParams;
-  const resolvedSource: "tap" | "qr" | "direct" = src === "qr" ? "qr" : src === "tap" || src === "nfc" ? "tap" : "direct";
+  const { src, st } = await searchParams;
   const profile = await getPublicProfileByUsername(username);
 
   if (profile && profile.username !== username) {
@@ -45,8 +45,20 @@ export default async function PublicProfilePage({
     notFound();
   }
 
+  const wantsQr = src === "qr";
+  const wantsTap = src === "tap" || src === "nfc";
+
+  const hasValidQrToken = wantsQr && verifySourceToken(st, profile.username, "qr");
+  const hasValidTapToken = wantsTap && verifySourceToken(st, profile.username, "tap");
+  const resolvedSource: "tap" | "qr" | "direct" = hasValidQrToken ? "qr" : hasValidTapToken ? "tap" : "direct";
+
   const requestHeaders = await headers();
   await recordUsernameAccess(profile.username, resolvedSource, requestHeaders);
 
-  return <PublicProfileView profile={profile} visitSource={resolvedSource} />;
+  const sourceTokens = {
+    tap: createSourceToken(profile.username, "tap") ?? undefined,
+    qr: createSourceToken(profile.username, "qr") ?? undefined,
+  };
+
+  return <PublicProfileView profile={profile} visitSource={resolvedSource} sourceTokens={sourceTokens} />;
 }
