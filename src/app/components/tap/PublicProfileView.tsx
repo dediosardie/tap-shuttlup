@@ -5,7 +5,7 @@ import {
   BadgeCheck, Briefcase, Building2, Car, Copy, Download, ExternalLink,
   Facebook, Globe, Instagram, Linkedin, Mail, MessageCircle,
   Phone, QrCode, Share2, Smartphone, TrendingUp, Users, User2,
-  Eye, Wifi, Youtube,
+  Eye, EyeOff, Link2, Wifi, Youtube,
 } from "lucide-react";
 import type { PublicProfile } from "@/lib/types";
 import type { ModeType } from "@/lib/types";
@@ -48,7 +48,7 @@ function MetricBadge({
   );
 }
 
-export function PublicProfileView({ profile }: { profile: PublicProfile }) {
+export function PublicProfileView({ profile, visitSource = "direct" }: { profile: PublicProfile; visitSource?: "tap" | "qr" | "direct" }) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -62,6 +62,12 @@ export function PublicProfileView({ profile }: { profile: PublicProfile }) {
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&color=F97316&bgcolor=121212&data=${encodeURIComponent(profileUrl)}`;
   const modeMeta = MODE_META[profile.mode as ModeType] ?? MODE_META.personal;
   const ModeIcon = modeMeta.icon;
+  const allowNfcQrProjects = visitSource === "tap" || visitSource === "qr";
+  const projects = (profile.projects ?? []).filter((project) => {
+    if (project.visibility === "private") return false;
+    if (project.visibility === "nfc") return allowNfcQrProjects;
+    return true;
+  });
 
   function handleCopy() {
     navigator.clipboard.writeText(profileUrl);
@@ -258,6 +264,100 @@ export function PublicProfileView({ profile }: { profile: PublicProfile }) {
                     </a>
                   );
                 })}
+            </div>
+          </motion.section>
+        )}
+
+        {/* Projects & Involvement */}
+        {projects.length > 0 && (
+          <motion.section
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut", delay: 0.14 }}
+            className="glass-card p-5"
+          >
+            <h2 className="mb-3 text-xs uppercase tracking-widest text-[var(--text-muted)]">Projects &amp; Involvement</h2>
+            <div className="overflow-x-auto pb-1">
+              <div className="flex snap-x snap-mandatory gap-3">
+                {projects.map((project) => {
+                  const projectShareBase = `${profileUrl}?project=${project.id}`;
+                  return (
+                    <div
+                      key={project.id}
+                      className="glass-card gradient-border min-w-[280px] snap-start rounded-2xl p-4"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="h-12 w-12 overflow-hidden rounded-xl border border-[var(--border-muted)] bg-[var(--bg-elevated)]">
+                          {project.logo_url ? (
+                            <img src={project.logo_url} alt={project.name || "Project logo"} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[var(--text-muted)]">
+                              <Link2 className="h-4 w-4" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{project.name || "Untitled Project"}</p>
+                          <p className="truncate text-xs text-[var(--text-muted)]">{project.role || "Contributor"}</p>
+                        </div>
+                      </div>
+
+                      <p className="mt-3 line-clamp-3 text-xs text-[var(--text-muted)]">{project.description || "No description available."}</p>
+
+                      <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-[10px] text-[var(--accent-color)]">
+                          {project.active ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                          {project.active ? "Active" : "Inactive"}
+                        </span>
+                        {project.verified && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] text-emerald-300">
+                            <BadgeCheck className="h-3 w-3" /> Verified
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-[11px]">
+                        <a
+                          href={`${projectShareBase}&src=tap&via=nfc`}
+                          className="floating-card inline-flex items-center justify-center gap-1 rounded-lg border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-2 py-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                        >
+                          <Wifi className="h-3.5 w-3.5 text-[var(--accent-color)]" /> NFC Share
+                        </a>
+                        <a
+                          href={`${projectShareBase}&src=qr&via=qr`}
+                          className="floating-card inline-flex items-center justify-center gap-1 rounded-lg border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-2 py-1.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                        >
+                          <QrCode className="h-3.5 w-3.5 text-[var(--accent-color)]" /> QR Share
+                        </a>
+                      </div>
+
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {project.website && (
+                          <a
+                            href={project.website}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 rounded-full border border-[var(--border-muted)] px-2 py-0.5 text-[10px] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                          >
+                            <Globe className="h-3 w-3" /> Website
+                          </a>
+                        )}
+                        {(project.social_links ?? []).slice(0, 2).map((link) => (
+                          <a
+                            key={`${project.id}-${link.platform}`}
+                            href={link.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 rounded-full border border-[var(--border-muted)] px-2 py-0.5 text-[10px] capitalize text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                          >
+                            <ExternalLink className="h-3 w-3" /> {link.platform}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </motion.section>
         )}

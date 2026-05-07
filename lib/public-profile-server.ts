@@ -15,7 +15,7 @@ type ProfileRow = {
   email: string | null;
   verified: boolean;
   theme: string | null;
-  settings: { hide_fleet_info?: boolean; profile_mode?: string } | null;
+  settings: { hide_fleet_info?: boolean; profile_mode?: string; projects?: unknown } | null;
 };
 
 type AccessSource = "tap" | "qr" | "direct";
@@ -38,6 +38,39 @@ function getClientIp(requestHeaders: Headers): string | null {
     if (first) return first;
   }
   return requestHeaders.get("x-real-ip")?.trim() || null;
+}
+
+function normalizePublicProjects(raw: unknown): NonNullable<PublicProfile["projects"]> {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item, index) => {
+      const row = (item ?? {}) as Record<string, unknown>;
+      const visibility = row.visibility === "private" || row.visibility === "nfc" ? row.visibility : "public";
+      if (visibility === "private") return null;
+      const links = Array.isArray(row.social_links)
+        ? row.social_links
+            .map((link) => {
+              const l = (link ?? {}) as Record<string, unknown>;
+              if (typeof l.platform !== "string" || typeof l.url !== "string") return null;
+              return { platform: l.platform, url: l.url };
+            })
+            .filter(Boolean) as { platform: string; url: string }[]
+        : [];
+
+      return {
+        id: typeof row.id === "string" && row.id ? row.id : `project-${index + 1}`,
+        name: typeof row.name === "string" ? row.name : "",
+        role: typeof row.role === "string" ? row.role : "",
+        description: typeof row.description === "string" ? row.description : "",
+        logo_url: typeof row.logo_url === "string" ? row.logo_url : null,
+        active: Boolean(row.active),
+        verified: Boolean(row.verified),
+        visibility,
+        website: typeof row.website === "string" ? row.website : null,
+        social_links: links,
+      };
+    })
+    .filter(Boolean) as NonNullable<PublicProfile["projects"]>;
 }
 
 async function insertAnalyticsEvent(cardId: string, source: AccessSource, requestHeaders: Headers): Promise<void> {
@@ -90,6 +123,7 @@ function mapProfileRow(
     theme: profile.theme ?? "obsidian",
     mode: (profile.settings?.profile_mode ?? "personal") as "personal" | "corporate" | "driver" | "fleet" | "investor",
     social_links: (socialLinks ?? []).map((l) => ({ platform: l.platform, url: l.url })),
+    projects: normalizePublicProjects(profile.settings?.projects),
     fleet_info: fleetInfo && !profile.settings?.hide_fleet_info
       ? {
           vehicle_type: fleetInfo.vehicle_type ?? undefined,

@@ -340,6 +340,7 @@ export function OnboardingPage() {
       bio: formData.bio,
       avatar_url: null,
       social_links: [],
+      projects: [],
     });
     if (supabase) {
       const { data: { user } } = await supabase.auth.getUser();

@@ -1,5 +1,25 @@
 export type ModeType = "personal" | "corporate" | "driver" | "fleet" | "investor";
 
+export type ProjectVisibility = "public" | "nfc" | "private";
+
+export type ProjectLink = {
+  platform: string;
+  url: string;
+};
+
+export type ProjectInvolvement = {
+  id: string;
+  name: string;
+  role: string;
+  description: string;
+  logo_url?: string | null;
+  active: boolean;
+  verified?: boolean;
+  visibility: ProjectVisibility;
+  website?: string | null;
+  social_links: ProjectLink[];
+};
+
 export type PublicProfile = {
   id: string;
   username: string;
@@ -14,6 +34,7 @@ export type PublicProfile = {
   theme: string;
   mode: ModeType;
   social_links: { platform: string; url: string }[];
+  projects?: ProjectInvolvement[];
   fleet_info?: {
     vehicle_type?: string;
     plate_number?: string;

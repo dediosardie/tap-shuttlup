@@ -657,6 +657,7 @@ export default function OnboardingPage() {
       mobile_no: "",
       email: "",
       social_links: [],
+      projects: [],
     });
 
     /* Upsert to Supabase if available */

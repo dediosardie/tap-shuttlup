@@ -1,4 +1,4 @@
-import type { ModeType } from "@/lib/types";
+import type { ModeType, ProjectInvolvement } from "@/lib/types";
 import { getViteSupabaseClient } from "@/lib/supabase";
 import { applyTheme } from "@/lib/themes";
 
@@ -15,6 +15,7 @@ export type DashboardProfile = {
   mobile_no: string;
   email: string;
   social_links: { platform: string; url: string }[];
+  projects: ProjectInvolvement[];
 };
 
 export type DashboardCard = {
@@ -137,6 +138,40 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+function normalizeProjects(raw: unknown): ProjectInvolvement[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((item, index) => {
+    const row = (item ?? {}) as Record<string, unknown>;
+    const links = Array.isArray(row.social_links)
+      ? row.social_links
+          .map((link) => {
+            const l = (link ?? {}) as Record<string, unknown>;
+            if (typeof l.platform !== "string" || typeof l.url !== "string") return null;
+            return { platform: l.platform, url: l.url };
+          })
+          .filter(Boolean) as { platform: string; url: string }[]
+      : [];
+
+    return {
+      id: typeof row.id === "string" && row.id ? row.id : `project-${index + 1}`,
+      name: typeof row.name === "string" ? row.name : "",
+      role: typeof row.role === "string" ? row.role : "",
+      description: typeof row.description === "string" ? row.description : "",
+      logo_url: typeof row.logo_url === "string" ? row.logo_url : null,
+      active: Boolean(row.active),
+      verified: Boolean(row.verified),
+      visibility: row.visibility === "private" || row.visibility === "nfc" ? row.visibility : "public",
+      website: typeof row.website === "string" ? row.website : null,
+      social_links: links,
+    };
+  });
+}
+
+function settingsWithProjects(existing: unknown, projects: ProjectInvolvement[]): Record<string, unknown> {
+  const base = existing && typeof existing === "object" ? (existing as Record<string, unknown>) : {};
+  return { ...base, projects };
+}
+
 // ─── Profile CRUD ─────────────────────────────────────────────────────────────
 
 export async function readProfile(): Promise<DashboardProfile | null> {
@@ -146,10 +181,11 @@ export async function readProfile(): Promise<DashboardProfile | null> {
     if (user) {
       const { data } = await db
         .from("profiles")
-        .select("id, username, full_name, position, company, bio, avatar_url, mobile_no, email, social_links(platform, url)")
+        .select("id, username, full_name, position, company, bio, avatar_url, mobile_no, email, settings, social_links(platform, url)")
         .eq("user_id", user.id)
         .single();
       if (data) {
+        const settings = (data.settings ?? {}) as Record<string, unknown>;
         return {
           id: data.id as string,
           username: data.username as string,
@@ -161,11 +197,14 @@ export async function readProfile(): Promise<DashboardProfile | null> {
           mobile_no: (data.mobile_no as string) ?? "",
           email: (data.email as string) ?? "",
           social_links: (data.social_links as { platform: string; url: string }[]) ?? [],
+          projects: normalizeProjects(settings.projects),
         };
       }
     }
   }
-  return loadState().profile;
+  const stateProfile = loadState().profile;
+  if (!stateProfile) return null;
+  return { ...stateProfile, projects: normalizeProjects(stateProfile.projects) };
 }
 
 export async function createProfile(profile: Omit<DashboardProfile, "id">): Promise<DashboardProfile> {
@@ -175,7 +214,7 @@ export async function createProfile(profile: Omit<DashboardProfile, "id">): Prom
     if (user) {
       const { data, error } = await db
         .from("profiles")
-        .insert({ user_id: user.id, username: profile.username, full_name: profile.full_name, position: profile.position, company: profile.company, bio: profile.bio, avatar_url: profile.avatar_url, mobile_no: profile.mobile_no, email: profile.email })
+        .insert({ user_id: user.id, username: profile.username, full_name: profile.full_name, position: profile.position, company: profile.company, bio: profile.bio, avatar_url: profile.avatar_url, mobile_no: profile.mobile_no, email: profile.email, settings: { projects: profile.projects } })
         .select("id")
         .single();
       if (data && !error) {
@@ -202,6 +241,7 @@ export async function updateProfile(profile: DashboardProfile): Promise<Dashboar
   if (db) {
     const { data: { user } } = await db.auth.getUser();
     if (user) {
+      const { data: existing } = await db.from("profiles").select("settings").eq("user_id", user.id).single();
       await db.from("profiles").update({
         username: profile.username,
         full_name: profile.full_name,
@@ -211,6 +251,7 @@ export async function updateProfile(profile: DashboardProfile): Promise<Dashboar
         avatar_url: profile.avatar_url,
         mobile_no: profile.mobile_no,
         email: profile.email,
+        settings: settingsWithProjects(existing?.settings, profile.projects),
       }).eq("user_id", user.id);
       await db.from("social_links").delete().eq("profile_id", profile.id);
       if (profile.social_links.length) {
@@ -538,7 +579,8 @@ export async function createSettings(settings: Omit<DashboardSettings, "id">): P
   if (db) {
     const { data: { user } } = await db.auth.getUser();
     if (user) {
-      await db.from("profiles").update({ settings: next }).eq("user_id", user.id);
+      const { data: existing } = await db.from("profiles").select("settings").eq("user_id", user.id).single();
+      await db.from("profiles").update({ settings: { ...(existing?.settings ?? {}), ...next } }).eq("user_id", user.id);
     }
   }
   return next;
@@ -552,7 +594,8 @@ export async function updateSettings(settings: DashboardSettings): Promise<Dashb
   if (db) {
     const { data: { user } } = await db.auth.getUser();
     if (user) {
-      await db.from("profiles").update({ settings }).eq("user_id", user.id);
+      const { data: existing } = await db.from("profiles").select("settings").eq("user_id", user.id).single();
+      await db.from("profiles").update({ settings: { ...(existing?.settings ?? {}), ...settings } }).eq("user_id", user.id);
     }
   }
   return settings;

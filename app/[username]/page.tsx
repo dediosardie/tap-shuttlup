@@ -30,6 +30,7 @@ export default async function PublicProfilePage({
 }) {
   const { username } = await params;
   const { src } = await searchParams;
+  const resolvedSource: "tap" | "qr" | "direct" = src === "qr" ? "qr" : src === "tap" || src === "nfc" ? "tap" : "direct";
   const profile = await getPublicProfileByUsername(username);
 
   if (profile && profile.username !== username) {
@@ -45,7 +46,7 @@ export default async function PublicProfilePage({
   }
 
   const requestHeaders = await headers();
-  await recordUsernameAccess(profile.username, src === "qr" ? "qr" : "direct", requestHeaders);
+  await recordUsernameAccess(profile.username, resolvedSource, requestHeaders);
 
-  return <PublicProfileView profile={profile} />;
+  return <PublicProfileView profile={profile} visitSource={resolvedSource} />;
 }

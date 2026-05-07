@@ -15,5 +15,5 @@ export async function GET(request: Request, { params }: { params: Promise<{ shor
 
   await recordShortcodeAccess(shortcode, "tap", request.headers);
 
-  return NextResponse.redirect(new URL(`/${profile.username}`, request.url));
+  return NextResponse.redirect(new URL(`/${profile.username}?src=tap`, request.url));
 }

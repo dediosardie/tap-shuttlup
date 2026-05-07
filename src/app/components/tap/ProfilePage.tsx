@@ -12,6 +12,8 @@ export function ProfilePage() {
   const location = useLocation();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const src = new URLSearchParams(location.search).get("src");
+  const visitSource: "tap" | "qr" | "direct" = src === "qr" ? "qr" : src === "tap" || src === "nfc" ? "tap" : "direct";
 
   useEffect(() => {
     let active = true;
@@ -28,7 +30,6 @@ export function ProfilePage() {
           return;
         }
         setProfile(resolved);
-        const src = new URLSearchParams(location.search).get("src");
         const coords = await requestLocation();
         if (src === "qr") {
           await recordUsernameAccess(resolved.username, "qr", coords);
@@ -74,7 +75,7 @@ export function ProfilePage() {
         <meta property="og:description" content={profile.bio} />
         <meta property="og:url" content={`https://tap.shuttlup.com/${profile.username}`} />
       </Helmet>
-      <PublicProfileView profile={profile} />
+      <PublicProfileView profile={profile} visitSource={visitSource} />
     </>
   );
 }
