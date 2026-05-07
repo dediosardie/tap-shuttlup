@@ -16,7 +16,7 @@ export default function DashboardCardsPage() {
   const [cards, setCards] = useState<DashboardCard[]>([]);
   const [copiedUid, setCopiedUid] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ uid: "", shortcode: "", mode: "fleet" as ModeType });
+  const [form, setForm] = useState({ uid: "", shortcode: "", mode: "corporate" as ModeType });
   const [message, setMessage] = useState<string>("");
 
   useEffect(() => {
@@ -52,7 +52,7 @@ export default function DashboardCardsPage() {
         status: "active",
       });
       persist([created, ...cards]);
-      setForm({ uid: "", shortcode: "", mode: "fleet" });
+      setForm({ uid: "", shortcode: "", mode: "corporate" });
       setMessage("Card created successfully.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Failed to create card.");
