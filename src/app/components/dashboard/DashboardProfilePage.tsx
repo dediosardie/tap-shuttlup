@@ -13,6 +13,8 @@ import {
 export function DashboardProfilePage() {
   const [saved, setSaved] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
+  const [pendingAvatarPreview, setPendingAvatarPreview] = useState<string | null>(null);
   const [profile, setProfile] = useState<DashboardProfile | null>(null);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -20,11 +22,37 @@ export function DashboardProfilePage() {
     void readProfile().then(setProfile);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (pendingAvatarPreview) {
+        URL.revokeObjectURL(pendingAvatarPreview);
+      }
+    };
+  }, [pendingAvatarPreview]);
+
   async function handleSave() {
     if (!profile) {
       return;
     }
-    await updateProfile(profile);
+
+    setUploadingAvatar(true);
+    let nextProfile = profile;
+
+    if (pendingAvatarFile) {
+      const nextUrl = await uploadProfileAvatar(pendingAvatarFile);
+      if (nextUrl) {
+        nextProfile = { ...profile, avatar_url: nextUrl };
+        setProfile(nextProfile);
+      }
+      setPendingAvatarFile(null);
+      setPendingAvatarPreview((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+    }
+
+    await updateProfile(nextProfile);
+    setUploadingAvatar(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   }
@@ -76,14 +104,12 @@ export function DashboardProfilePage() {
     if (!file || !profile) return;
     if (!file.type.startsWith("image/")) return;
 
-    setUploadingAvatar(true);
-    const nextUrl = await uploadProfileAvatar(file);
-    if (nextUrl) {
-      setField("avatar_url", nextUrl);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
-    }
-    setUploadingAvatar(false);
+    setSaved(false);
+    setPendingAvatarFile(file);
+    setPendingAvatarPreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
   }
 
   if (!profile) {
@@ -110,7 +136,13 @@ export function DashboardProfilePage() {
         {/* Avatar block */}
         <div className="flex items-center gap-4 rounded-2xl border border-[var(--border-muted)] bg-[var(--bg-secondary)] p-5">
           <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[var(--accent-color)] to-[var(--accent-purple)] p-[2px]">
-            {profile.avatar_url ? (
+            {pendingAvatarPreview ? (
+              <img
+                src={pendingAvatarPreview}
+                alt={profile.full_name}
+                className="h-full w-full rounded-[calc(var(--radius)-2px)] object-cover"
+              />
+            ) : profile.avatar_url ? (
               <img
                 src={profile.avatar_url}
                 alt={profile.full_name}
@@ -141,7 +173,7 @@ export function DashboardProfilePage() {
               className="mt-1 text-xs text-[var(--accent-color)] hover:text-[var(--accent-hover)] disabled:opacity-50"
               disabled={uploadingAvatar}
             >
-              {uploadingAvatar ? "Uploading..." : "Change avatar"}
+              {pendingAvatarFile ? "Avatar selected (save to upload)" : "Change avatar"}
             </button>
           </div>
         </div>
@@ -239,10 +271,11 @@ export function DashboardProfilePage() {
           <button
             type="button"
             onClick={handleSave}
+            disabled={uploadingAvatar}
             className="premium-button flex items-center gap-2 rounded-xl px-6 py-2.5 text-sm"
           >
             {saved ? <BadgeCheck className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-            {saved ? "Saved!" : "Save Profile"}
+            {uploadingAvatar ? "Saving..." : saved ? "Saved!" : "Save Profile"}
           </button>
           <button
             type="button"
