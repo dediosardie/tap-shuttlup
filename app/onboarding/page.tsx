@@ -654,6 +654,8 @@ export default function OnboardingPage() {
       company: formData.company,
       bio: formData.bio,
       avatar_url: null,
+      mobile_no: "",
+      email: "",
       social_links: [],
     });
 

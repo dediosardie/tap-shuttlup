@@ -1,5 +1,5 @@
-import type { ModeType } from "@/lib/types";
-import { getSupabaseBrowserClient } from "@/lib/supabase-client";
+import type { ModeType } from "./types";
+import { getSupabaseBrowserClient } from "./supabase-client";
 
 export type DashboardProfile = {
   id: string;

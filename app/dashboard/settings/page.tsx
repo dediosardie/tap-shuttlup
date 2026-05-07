@@ -52,24 +52,24 @@ export default function DashboardSettingsPage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    setSettings(readSettings());
+    void readSettings().then(setSettings);
   }, []);
 
   function patchSettings(patch: Partial<DashboardSettings>) {
     setSettings((prev) => (prev ? { ...prev, ...patch } : prev));
   }
 
-  function handleSave() {
+  async function handleSave() {
     if (!settings) {
       return;
     }
-    updateSettings(settings);
+    await updateSettings(settings);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
 
-  function handleCreate() {
-    const created = createSettings({
+  async function handleCreate() {
+    const created = await createSettings({
       public_profile: true,
       show_analytics_badges: true,
       hide_fleet_info: false,
@@ -78,12 +78,13 @@ export default function DashboardSettingsPage() {
       rate_limit_taps: true,
       anti_scraping: true,
       custom_domain: "",
+      profile_mode: "personal",
     });
     setSettings(created);
   }
 
-  function handleDelete() {
-    deleteSettings();
+  async function handleDelete() {
+    await deleteSettings();
     setSettings(null);
   }
 

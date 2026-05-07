@@ -48,6 +48,7 @@ export default function DashboardCardsPage() {
       const created = await createCard({
         uid: form.uid,
         shortcode: form.shortcode,
+        username: "",
         mode: form.mode,
         status: "active",
       });
