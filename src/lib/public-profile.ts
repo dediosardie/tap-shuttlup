@@ -15,7 +15,7 @@ type ProfileRow = {
   email: string | null;
   verified: boolean;
   theme: string | null;
-  settings: { hide_fleet_info?: boolean } | null;
+  settings: { hide_fleet_info?: boolean; profile_mode?: string } | null;
 };
 
 async function mapProfile(profile: ProfileRow): Promise<PublicProfile> {
@@ -33,6 +33,7 @@ async function mapProfile(profile: ProfileRow): Promise<PublicProfile> {
       email: profile.email ?? null,
       verified: profile.verified ?? false,
       theme: profile.theme ?? "obsidian",
+      mode: (profile.settings?.profile_mode ?? "personal") as import("@/lib/types").ModeType,
       social_links: [],
       fleet_info: null,
       metrics: { taps: 0, views: 0, saves: 0 },
@@ -59,6 +60,7 @@ async function mapProfile(profile: ProfileRow): Promise<PublicProfile> {
     email: profile.email ?? null,
     verified: profile.verified ?? false,
     theme: profile.theme ?? "obsidian",
+    mode: (profile.settings?.profile_mode ?? "personal") as import("@/lib/types").ModeType,
     social_links: (socialLinks ?? []).map((link) => ({ platform: link.platform, url: link.url })),
     fleet_info: fleetInfo && !profile.settings?.hide_fleet_info
       ? {

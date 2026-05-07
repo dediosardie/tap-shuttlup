@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BadgeCheck, Eye, Globe, Lock, Search, Shield, Trash2 } from "lucide-react";
+import { BadgeCheck, Briefcase, Car, Eye, Globe, Lock, Search, Shield, Trash2, TrendingUp, User2, Users } from "lucide-react";
 import { DashboardShell } from "@/app/components/dashboard/DashboardShell";
 import {
   createSettings,
@@ -9,6 +9,15 @@ import {
   updateSettings,
   type DashboardSettings,
 } from "@/lib/dashboard-crud";
+import type { ModeType } from "@/lib/types";
+
+const PROFILE_MODES: { type: ModeType; label: string; description: string; icon: React.ElementType; color: string }[] = [
+  { type: "personal",  label: "Personal",  description: "Individual · Freelancer · Creative",    icon: User2,      color: "text-violet-400 border-violet-500/40 bg-violet-500/10" },
+  { type: "corporate", label: "Corporate", description: "Executive · Professional · B2B",         icon: Briefcase,  color: "text-blue-400 border-blue-500/40 bg-blue-500/10" },
+  { type: "driver",    label: "Driver",    description: "Rideshare · Delivery · Transport",       icon: Car,        color: "text-[var(--accent-color)] border-[var(--accent-color)]/40 bg-[var(--accent-color)]/10" },
+  { type: "fleet",     label: "Fleet",     description: "Fleet Manager · Operator · Logistics",   icon: Users,      color: "text-emerald-400 border-emerald-500/40 bg-emerald-500/10" },
+  { type: "investor",  label: "Investor",  description: "Investor · Fund Manager · VC",           icon: TrendingUp, color: "text-amber-400 border-amber-500/40 bg-amber-500/10" },
+];
 
 function ToggleRow({
   label,
@@ -55,6 +64,7 @@ const DEFAULT_SETTINGS: Omit<DashboardSettings, "id"> = {
   rate_limit_taps: true,
   anti_scraping: true,
   custom_domain: "",
+  profile_mode: "personal",
 };
 
 export function DashboardSettingsPage() {
@@ -193,6 +203,42 @@ export function DashboardSettingsPage() {
             <p className="mt-2 text-xs text-[var(--text-disabled)]">
               Point a CNAME record to <span className="font-mono text-[var(--text-muted)]">tap.shuttlup.com</span>. Available on Pro plan.
             </p>
+          </div>
+        </div>
+
+        {/* Profile Mode */}
+        <div>
+          <div className="mb-3 flex items-center gap-2">
+            <Users className="h-4 w-4 text-[var(--accent-color)]" />
+            <h2 className="text-sm font-semibold text-[var(--text-primary)]">Profile Mode</h2>
+          </div>
+          <p className="mb-3 text-xs text-[var(--text-muted)]">
+            Controls how your public profile is displayed — sections, badge, and layout adapt to your selected role.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {PROFILE_MODES.map((m) => {
+              const Icon = m.icon;
+              const active = settings.profile_mode === m.type;
+              return (
+                <button
+                  key={m.type}
+                  type="button"
+                  onClick={() => patchSettings({ profile_mode: m.type })}
+                  className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all ${
+                    active
+                      ? `${m.color} border-current`
+                      : "border-[var(--border-muted)] bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:border-[var(--accent-color)]/30"
+                  }`}
+                >
+                  <Icon className="h-5 w-5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold leading-tight">{m.label}</p>
+                    <p className="text-[10px] leading-tight opacity-70">{m.description}</p>
+                  </div>
+                  {active && <BadgeCheck className="ml-auto h-4 w-4 shrink-0" />}
+                </button>
+              );
+            })}
           </div>
         </div>
 

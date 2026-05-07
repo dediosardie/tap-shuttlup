@@ -53,6 +53,7 @@ export type DashboardSettings = {
   rate_limit_taps: boolean;
   anti_scraping: boolean;
   custom_domain: string;
+  profile_mode: ModeType;
 };
 
 export type AnalyticsEvent = {

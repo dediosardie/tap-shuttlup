@@ -15,7 +15,7 @@ type ProfileRow = {
   email: string | null;
   verified: boolean;
   theme: string | null;
-  settings: { hide_fleet_info?: boolean } | null;
+  settings: { hide_fleet_info?: boolean; profile_mode?: string } | null;
 };
 
 type AccessSource = "tap" | "qr" | "direct";
@@ -82,6 +82,7 @@ function mapProfileRow(
     email: profile.email ?? null,
     verified: profile.verified ?? false,
     theme: profile.theme ?? "obsidian",
+    mode: (profile.settings?.profile_mode ?? "personal") as "personal" | "corporate" | "driver" | "fleet" | "investor",
     social_links: (socialLinks ?? []).map((l) => ({ platform: l.platform, url: l.url })),
     fleet_info: fleetInfo && !profile.settings?.hide_fleet_info
       ? {

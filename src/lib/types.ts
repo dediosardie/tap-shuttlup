@@ -12,6 +12,7 @@ export type PublicProfile = {
   email?: string | null;
   verified: boolean;
   theme: string;
+  mode: ModeType;
   social_links: { platform: string; url: string }[];
   fleet_info?: {
     vehicle_type?: string;

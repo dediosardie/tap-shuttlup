@@ -2,12 +2,13 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { motion } from "motion/react";
 import {
-  BadgeCheck, Building2, Car, Copy, Download, ExternalLink,
+  BadgeCheck, Briefcase, Building2, Car, Copy, Download, ExternalLink,
   Facebook, Globe, Instagram, Linkedin, Mail, MessageCircle,
-  Phone, QrCode, Share2, Smartphone, Youtube, TrendingUp,
-  Eye, Users, Wifi,
+  Phone, QrCode, Share2, Smartphone, TrendingUp, Users, User2,
+  Eye, Wifi, Youtube,
 } from "lucide-react";
 import type { PublicProfile } from "@/lib/types";
+import type { ModeType } from "@/lib/types";
 import { downloadVCard } from "@/lib/vcard";
 
 const SOCIAL_ICONS: Record<string, React.ElementType> = {
@@ -17,6 +18,14 @@ const SOCIAL_ICONS: Record<string, React.ElementType> = {
   youtube: Youtube,
   website: Globe,
   tiktok: Smartphone,
+};
+
+const MODE_META: Record<ModeType, { label: string; icon: React.ElementType; badgeClass: string; showMetricsTop: boolean; showFleet: boolean }> = {
+  personal:  { label: "Personal",  icon: User2,      badgeClass: "bg-violet-500/15 text-violet-300",  showMetricsTop: false, showFleet: false },
+  corporate: { label: "Corporate", icon: Briefcase,  badgeClass: "bg-blue-500/15 text-blue-300",      showMetricsTop: false, showFleet: false },
+  driver:    { label: "Driver",    icon: Car,        badgeClass: "bg-[var(--accent-soft)] text-[var(--accent-color)]", showMetricsTop: false, showFleet: true  },
+  fleet:     { label: "Fleet",     icon: Users,      badgeClass: "bg-emerald-500/15 text-emerald-300", showMetricsTop: false, showFleet: true  },
+  investor:  { label: "Investor",  icon: TrendingUp, badgeClass: "bg-amber-500/15 text-amber-300",    showMetricsTop: true,  showFleet: false },
 };
 
 function MetricBadge({
@@ -41,6 +50,8 @@ export function PublicProfileView({ profile }: { profile: PublicProfile }) {
   const [copied, setCopied] = useState(false);
   const profileUrl = `https://tap.shuttlup.com/${profile.username}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&color=F97316&bgcolor=121212&data=${encodeURIComponent(profileUrl)}`;
+  const modeMeta = MODE_META[profile.mode as ModeType] ?? MODE_META.personal;
+  const ModeIcon = modeMeta.icon;
 
   function handleCopy() {
     navigator.clipboard.writeText(profileUrl);
@@ -107,6 +118,13 @@ export function PublicProfileView({ profile }: { profile: PublicProfile }) {
                   </span>
                 </div>
               )}
+              {/* Mode badge */}
+              <div className="mt-1">
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${modeMeta.badgeClass}`}>
+                  <ModeIcon className="h-3.5 w-3.5" />
+                  {modeMeta.label}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -114,6 +132,7 @@ export function PublicProfileView({ profile }: { profile: PublicProfile }) {
             <p className="mt-5 text-sm leading-relaxed text-[var(--text-muted)]">{profile.bio}</p>
           )}
 
+          {/* Investor: metrics pinned to top of hero; others: shown below bio */}
           {profile.metrics && (
             <div className="mt-5 grid grid-cols-3 gap-3">
               <MetricBadge label="Taps" value={profile.metrics.taps} icon={Wifi} />
@@ -230,8 +249,8 @@ export function PublicProfileView({ profile }: { profile: PublicProfile }) {
           </motion.section>
         )}
 
-        {/* Fleet / Transport Info */}
-        {profile.fleet_info && (
+        {/* Fleet / Transport Info — shown for driver & fleet modes when data exists */}
+        {profile.fleet_info && modeMeta.showFleet && (
           <motion.section
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
