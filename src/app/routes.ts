@@ -5,6 +5,7 @@ import { NotFound } from "./components/NotFound";
 import { ProfilePage } from "./components/tap/ProfilePage";
 import { QrPage } from "./components/tap/QrPage";
 import { TapRedirectPage } from "./components/tap/TapRedirectPage";
+import { TapDemoPage } from "./components/tap/TapDemoPage";
 import { RequireAuth } from "./components/RequireAuth";
 import { DashboardPage } from "./components/dashboard/DashboardPage";
 import { DashboardAnalyticsPage } from "./components/dashboard/DashboardAnalyticsPage";
@@ -39,6 +40,9 @@ export const router = createBrowserRouter([
 
   // NFC shortcode redirect  →  /t/:shortcode
   { path: "/t/:shortcode", Component: TapRedirectPage },
+
+  // Public demo page       →  /tap/demo
+  { path: "/tap/demo", Component: TapDemoPage },
 
   // Public NFC profile     →  /:username
   { path: "/qr/:username", Component: QrPage },

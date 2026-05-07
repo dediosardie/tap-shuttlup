@@ -30,6 +30,7 @@ export const demoProfiles: PublicProfile[] = [
     avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
     verified: true,
     theme: "obsidian",
+    mode: "fleet",
     social_links: [
       { platform: "linkedin", url: "https://linkedin.com" },
       { platform: "instagram", url: "https://instagram.com" },
@@ -70,6 +71,7 @@ function getRuntimeProfileFromDashboard(): PublicProfile | null {
       avatar_url: profile.avatar_url ?? null,
       verified: false,
       theme: "obsidian",
+      mode: "personal",
       social_links: profile.social_links ?? [],
       metrics: {
         taps: totalTaps,
