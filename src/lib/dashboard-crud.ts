@@ -237,6 +237,36 @@ export async function deleteProfile(): Promise<void> {
   saveState(state);
 }
 
+export async function uploadProfileAvatar(file: File): Promise<string | null> {
+  const db = getViteSupabaseClient();
+  if (!db) return null;
+
+  const { data: { user } } = await db.auth.getUser();
+  if (!user) return null;
+
+  const ext = (file.name.split(".").pop() ?? "jpg").toLowerCase();
+  const filePath = `${user.id}/avatar-${Date.now()}.${ext}`;
+
+  const { error: uploadError } = await db.storage
+    .from("avatars")
+    .upload(filePath, file, { contentType: file.type || undefined, upsert: false });
+
+  if (uploadError) return null;
+
+  const { data: publicData } = db.storage.from("avatars").getPublicUrl(filePath);
+  const avatarUrl = publicData.publicUrl;
+
+  await db.from("profiles").update({ avatar_url: avatarUrl }).eq("user_id", user.id);
+
+  const state = loadState();
+  if (state.profile) {
+    state.profile.avatar_url = avatarUrl;
+    saveState(state);
+  }
+
+  return avatarUrl;
+}
+
 // ─── Cards CRUD ───────────────────────────────────────────────────────────────
 
 export async function readCards(): Promise<DashboardCard[]> {

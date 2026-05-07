@@ -1,17 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BadgeCheck, Save, Trash2, UserPlus2, User2 } from "lucide-react";
 import { DashboardShell } from "@/app/components/dashboard/DashboardShell";
 import {
   createProfile,
   deleteProfile,
   readProfile,
+  uploadProfileAvatar,
   updateProfile,
   type DashboardProfile,
 } from "@/lib/dashboard-crud";
 
 export function DashboardProfilePage() {
   const [saved, setSaved] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [profile, setProfile] = useState<DashboardProfile | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     void readProfile().then(setProfile);
@@ -69,6 +72,20 @@ export function DashboardProfilePage() {
     });
   }
 
+  async function handleAvatarChange(file: File | null) {
+    if (!file || !profile) return;
+    if (!file.type.startsWith("image/")) return;
+
+    setUploadingAvatar(true);
+    const nextUrl = await uploadProfileAvatar(file);
+    if (nextUrl) {
+      setField("avatar_url", nextUrl);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    }
+    setUploadingAvatar(false);
+  }
+
   if (!profile) {
     return (
       <DashboardShell title="Profile">
@@ -93,15 +110,38 @@ export function DashboardProfilePage() {
         {/* Avatar block */}
         <div className="flex items-center gap-4 rounded-2xl border border-[var(--border-muted)] bg-[var(--bg-secondary)] p-5">
           <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[var(--accent-color)] to-[var(--accent-purple)] p-[2px]">
-            <div className="flex h-full w-full items-center justify-center rounded-[calc(var(--radius)-2px)] bg-[var(--bg-secondary)]">
-              <User2 className="h-7 w-7 text-[var(--text-primary)]" />
-            </div>
+            {profile.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.full_name}
+                className="h-full w-full rounded-[calc(var(--radius)-2px)] object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center rounded-[calc(var(--radius)-2px)] bg-[var(--bg-secondary)]">
+                <User2 className="h-7 w-7 text-[var(--text-primary)]" />
+              </div>
+            )}
           </div>
           <div>
             <p className="font-semibold text-[var(--text-primary)]">{profile.full_name}</p>
             <p className="text-sm text-[var(--text-muted)]">tap.shuttlup.com/{profile.username}</p>
-            <button type="button" className="mt-1 text-xs text-[var(--accent-color)] hover:text-[var(--accent-hover)]">
-              Change avatar
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                void handleAvatarChange(e.target.files?.[0] ?? null);
+                e.currentTarget.value = "";
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => avatarInputRef.current?.click()}
+              className="mt-1 text-xs text-[var(--accent-color)] hover:text-[var(--accent-hover)] disabled:opacity-50"
+              disabled={uploadingAvatar}
+            >
+              {uploadingAvatar ? "Uploading..." : "Change avatar"}
             </button>
           </div>
         </div>
