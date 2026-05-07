@@ -58,8 +58,11 @@ export type AnalyticsEvent = {
   id: string;
   source: "nfc" | "qr" | "direct";
   city: string;
+  country: string;
   device: string;
   referrer: string;
+  latitude: number | null;
+  longitude: number | null;
   created_at: string;
 };
 
@@ -486,12 +489,15 @@ export async function readAnalytics(): Promise<AnalyticsEvent[]> {
       const cardIds = (cards as Array<{ id: string }>).map((c) => c.id);
       const { data } = await db.from("tap_analytics").select("*").in("card_id", cardIds).order("created_at", { ascending: false });
       if (data) {
-        return (data as Array<{ id: string; referrer: string | null; city: string | null; device: string | null; created_at: string }>).map((a) => ({
+        return (data as Array<{ id: string; referrer: string | null; city: string | null; device: string | null; latitude: number | null; longitude: number | null; created_at: string }>).map((a) => ({
           id: a.id,
           source: (a.referrer === "qr" ? "qr" : a.referrer === "tap" ? "nfc" : "direct") as "nfc" | "qr" | "direct",
           city: a.city ?? "",
+          country: "",
           device: a.device ?? "",
           referrer: a.referrer ?? "",
+          latitude: a.latitude ?? null,
+          longitude: a.longitude ?? null,
           created_at: a.created_at,
         }));
       }
@@ -512,13 +518,16 @@ export async function createAnalyticsEvent(event: Omit<AnalyticsEvent, "id" | "c
         .select("*")
         .single();
       if (data && !error) {
-        const row = data as { id: string; referrer: string | null; city: string | null; device: string | null; created_at: string };
+        const row = data as { id: string; referrer: string | null; city: string | null; device: string | null; latitude: number | null; longitude: number | null; created_at: string };
         const created: AnalyticsEvent = {
           id: row.id,
           source: event.source,
           city: row.city ?? "",
+          country: "",
           device: row.device ?? "",
           referrer: row.referrer ?? "",
+          latitude: row.latitude ?? null,
+          longitude: row.longitude ?? null,
           created_at: row.created_at,
         };
         const state = loadState();

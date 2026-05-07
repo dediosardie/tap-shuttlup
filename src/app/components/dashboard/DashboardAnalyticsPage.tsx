@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Download, Eye, Pencil, Plus, Trash2 } from "lucide-react";
+import { Download, Eye, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
 import { DashboardShell } from "@/app/components/dashboard/DashboardShell";
 import { AnalyticsChart } from "@/app/components/dashboard/AnalyticsChart";
 import {
@@ -9,6 +9,7 @@ import {
   updateAnalyticsEvent,
   type AnalyticsEvent,
 } from "@/lib/dashboard-crud";
+import { reverseGeocode } from "@/lib/reverse-geocode";
 
 export function DashboardAnalyticsPage() {
   const [events, setEvents] = useState<AnalyticsEvent[]>([]);
@@ -16,7 +17,30 @@ export function DashboardAnalyticsPage() {
   const [form, setForm] = useState<{ source: "nfc" | "qr" | "direct"; city: string; device: string; referrer: string }>({ source: "nfc", city: "", device: "", referrer: "" });
 
   useEffect(() => {
-    void readAnalytics().then(setEvents);
+    async function load() {
+      const raw = await readAnalytics();
+      setEvents(raw);
+
+      // Resolve lat/lng → city + country for rows that have coords
+      const needsGeo = raw.filter((e) => e.latitude != null && e.longitude != null);
+      if (needsGeo.length === 0) return;
+
+      const resolved = await Promise.all(
+        needsGeo.map(async (e) => {
+          const geo = await reverseGeocode(e.latitude!, e.longitude!);
+          if (!geo) return e;
+          return {
+            ...e,
+            city: e.city || geo.city,
+            country: geo.country,
+          };
+        }),
+      );
+
+      const resolvedMap = new Map(resolved.map((e) => [e.id, e]));
+      setEvents((prev) => prev.map((e) => resolvedMap.get(e.id) ?? e));
+    }
+    void load();
   }, []);
 
   const monthStats = useMemo(() => {
@@ -39,8 +63,12 @@ export function DashboardAnalyticsPage() {
       const key = event.city || "Unknown";
       map.set(key, (map.get(key) ?? 0) + 1);
     });
+    const countryMap = new Map<string, string>();
+    events.forEach((e) => {
+      if (e.city && e.country) countryMap.set(e.city, e.country);
+    });
     return [...map.entries()]
-      .map(([city, taps]) => ({ city, country: "PH", taps, pct: Number(((taps / total) * 100).toFixed(1)) }))
+      .map(([city, taps]) => ({ city, country: countryMap.get(city) ?? "", taps, pct: Number(((taps / total) * 100).toFixed(1)) }))
       .sort((a, b) => b.taps - a.taps);
   }, [events]);
 
@@ -208,7 +236,7 @@ export function DashboardAnalyticsPage() {
             >
               <div className="flex items-center gap-2">
                 <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-[var(--bg-elevated)] text-[10px] font-bold text-[var(--accent-color)]">
-                  {row.country}
+                  {row.country ? row.country.slice(0, 2).toUpperCase() : <MapPin className="h-3 w-3" />}
                 </div>
                 <span className="text-[var(--text-primary)]">{row.city}</span>
               </div>
@@ -230,7 +258,7 @@ export function DashboardAnalyticsPage() {
       <div className="mt-6 overflow-hidden rounded-2xl border border-[var(--border-muted)] bg-[var(--bg-secondary)]">
         <div className="grid grid-cols-[100px_1fr_1fr_1fr_auto] gap-3 border-b border-[var(--border-muted)] px-4 py-2 text-[10px] uppercase tracking-widest text-[var(--text-muted)]">
           <span>Source</span>
-          <span>City</span>
+          <span>Location</span>
           <span>Device</span>
           <span>Referrer</span>
           <span>Actions</span>
@@ -238,12 +266,28 @@ export function DashboardAnalyticsPage() {
         {events.map((event) => (
           <div key={event.id} className="grid grid-cols-[100px_1fr_1fr_1fr_auto] items-center gap-3 border-b border-[var(--border-muted)] px-4 py-2 text-sm last:border-0">
             <span className="uppercase text-[var(--text-secondary)]">{event.source}</span>
-            <input
-              value={event.city}
-              disabled={editingId !== event.id}
-              onChange={(e) => handleUpdate(event, { city: e.target.value })}
-              className="rounded-lg border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-2 py-1 text-sm text-[var(--text-primary)] disabled:opacity-80"
-            />
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <input
+                value={event.city}
+                disabled={editingId !== event.id}
+                onChange={(e) => handleUpdate(event, { city: e.target.value })}
+                className="rounded-lg border border-[var(--border-muted)] bg-[var(--bg-elevated)] px-2 py-1 text-sm text-[var(--text-primary)] disabled:opacity-80"
+              />
+              {event.country && (
+                <span className="pl-2 text-[10px] text-[var(--text-disabled)]">{event.country}</span>
+              )}
+              {event.latitude != null && event.longitude != null && (
+                <a
+                  href={`https://maps.google.com/?q=${event.latitude},${event.longitude}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 pl-2 text-[10px] text-[var(--accent-color)] hover:underline"
+                >
+                  <MapPin className="h-2.5 w-2.5" />
+                  {event.latitude.toFixed(4)}, {event.longitude.toFixed(4)}
+                </a>
+              )}
+            </div>
             <input
               value={event.device}
               disabled={editingId !== event.id}
