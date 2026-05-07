@@ -40,6 +40,7 @@ export default function DashboardProfilePage() {
       email: "",
       social_links: [
         { platform: "linkedin", url: "" },
+        { platform: "facebook", url: "" },
         { platform: "instagram", url: "" },
         { platform: "website", url: "" },
       ],
@@ -185,6 +186,7 @@ export default function DashboardProfilePage() {
           <h2 className="text-xs uppercase tracking-widest text-[var(--text-muted)]">Social &amp; Links</h2>
           {[
             { id: "linkedin", label: "LinkedIn", placeholder: "https://linkedin.com/in/..." },
+            { id: "facebook", label: "Facebook", placeholder: "https://facebook.com/..." },
             { id: "instagram", label: "Instagram", placeholder: "https://instagram.com/..." },
             { id: "website", label: "Website", placeholder: "https://..." },
           ].map(({ id, label, placeholder }) => (

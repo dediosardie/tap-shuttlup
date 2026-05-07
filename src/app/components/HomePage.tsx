@@ -61,7 +61,7 @@ export function HomePage() {
                 View Demo NFC Card
               </Link>
               <a
-                href="https://tap.shuttlup.com"
+                href="/login"
                 target="_blank"
                 rel="noreferrer"
                 className="rounded-xl border border-border-muted px-6 py-3 text-sm text-text-secondary transition-all hover:bg-accent-soft hover:text-text-primary"

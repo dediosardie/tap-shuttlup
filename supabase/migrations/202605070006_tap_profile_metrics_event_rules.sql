@@ -30,7 +30,7 @@ left join (
   group by s.profile_id
 ) save_totals on save_totals.profile_id = p.id
 left join (
-  select c.profile_id, count(*) as qr_scans
+  select c.profile_id, count(*)::numeric as qr_scans
   from public.tap_analytics a
   join public.nfc_cards c on c.id = a.card_id
   where lower(coalesce(a.referrer, '')) = 'qr'
