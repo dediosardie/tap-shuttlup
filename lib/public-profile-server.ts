@@ -20,6 +20,10 @@ type ProfileRow = {
 
 type AccessSource = "tap" | "qr" | "direct";
 
+function isNfcSource(source: AccessSource): boolean {
+  return source === "tap";
+}
+
 type CardRow = {
   id: string;
   profile_id: string;
@@ -159,7 +163,9 @@ export async function recordShortcodeAccess(shortcode: string, source: AccessSou
   if (!resolvedCard || !resolvedCard.is_active) return;
 
   await insertAnalyticsEvent(resolvedCard.id, source, requestHeaders);
-  await incrementCardTapCount(resolvedCard.id, resolvedCard.tap_count ?? 0);
+  if (isNfcSource(source)) {
+    await incrementCardTapCount(resolvedCard.id, resolvedCard.tap_count ?? 0);
+  }
 }
 
 export async function recordUsernameAccess(username: string, source: AccessSource, requestHeaders: Headers): Promise<void> {
@@ -197,7 +203,9 @@ export async function recordUsernameAccess(username: string, source: AccessSourc
   if (!resolvedCard) return;
 
   await insertAnalyticsEvent(resolvedCard.id, source, requestHeaders);
-  await incrementCardTapCount(resolvedCard.id, resolvedCard.tap_count ?? 0);
+  if (isNfcSource(source)) {
+    await incrementCardTapCount(resolvedCard.id, resolvedCard.tap_count ?? 0);
+  }
 }
 
 export async function getAuthedUsername(): Promise<string | null> {

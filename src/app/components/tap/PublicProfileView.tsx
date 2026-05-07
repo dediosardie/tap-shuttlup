@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import type { PublicProfile } from "@/lib/types";
 import type { ModeType } from "@/lib/types";
+import { recordProfileSave } from "@/lib/public-profile";
 import { downloadVCard } from "@/lib/vcard";
 
 const SOCIAL_ICONS: Record<string, React.ElementType> = {
@@ -154,7 +155,10 @@ export function PublicProfileView({ profile }: { profile: PublicProfile }) {
               {
                 label: "Save",
                 icon: Download,
-                onClick: () => downloadVCard(profile),
+                onClick: async () => {
+                  await recordProfileSave(profile.id);
+                  downloadVCard(profile);
+                },
               },
               {
                 label: "Call",

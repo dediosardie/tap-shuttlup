@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPublicProfileByUsername } from "@/lib/public-profile-server";
+import { getSupabaseServerClient } from "@/lib/supabase-server";
 import { buildVCard } from "@/lib/vcard";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ username: string }> }) {
@@ -9,6 +10,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ use
   if (!profile) {
     return new NextResponse("Profile not found", { status: 404 });
   }
+
+  // Save trigger: count every successful vCard download request.
+  const supabase = await getSupabaseServerClient();
+  await supabase.from("tap_saves").insert({ profile_id: profile.id });
 
   const vcard = buildVCard(profile);
   return new NextResponse(vcard, {
