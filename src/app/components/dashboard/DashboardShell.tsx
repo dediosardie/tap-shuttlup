@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import {
-  BarChart3, CreditCard, Home, Layers, Palette,
+  BarChart3, CreditCard, Home, Layers, LogOut, Palette,
   Settings, UserCircle2, Wifi,
 } from "lucide-react";
 import { TapNotificationToast } from "@/app/components/dashboard/TapNotificationToast";
 import { getAuthedUsername } from "@/lib/public-profile";
+import { getViteSupabaseClient } from "@/lib/supabase";
 
 const navItems = [
   { href: "/dashboard", label: "Overview", icon: Home, exact: true },
@@ -25,7 +26,14 @@ export function DashboardShell({
   children: React.ReactNode;
 }) {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [publicProfileHref, setPublicProfileHref] = useState<string | null>(null);
+
+  async function handleLogout() {
+    const supabase = getViteSupabaseClient();
+    if (supabase) await supabase.auth.signOut();
+    navigate("/login");
+  }
 
   useEffect(() => {
     async function loadPublicProfileHref() {
@@ -106,6 +114,16 @@ export function DashboardShell({
                 Public card unavailable
               </span>
             )}
+          </div>
+
+          <div className="mt-2 px-1">
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-xs text-[var(--text-muted)] transition-colors hover:bg-red-500/10 hover:text-red-400"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Sign out
+            </button>
           </div>
         </aside>
 

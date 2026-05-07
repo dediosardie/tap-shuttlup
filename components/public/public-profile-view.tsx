@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { applyTheme } from "@/lib/themes";
 import { motion } from "framer-motion";
 import {
   BadgeCheck, Building2, Car, Copy, Download, ExternalLink,
@@ -31,6 +32,10 @@ function MetricBadge({ label, value, icon: Icon }: { label: string; value: numbe
 
 export function PublicProfileView({ profile }: { profile: PublicProfile }) {
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    applyTheme(profile.theme ?? "obsidian");
+  }, [profile.theme]);
   const profileUrl = `https://tap.shuttlup.com/${profile.username}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&color=F97316&bgcolor=121212&data=${encodeURIComponent(profileUrl)}`;
 

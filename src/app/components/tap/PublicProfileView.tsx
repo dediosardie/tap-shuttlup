@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { motion } from "motion/react";
 import {
@@ -11,6 +11,7 @@ import type { PublicProfile } from "@/lib/types";
 import type { ModeType } from "@/lib/types";
 import { recordProfileSave } from "@/lib/public-profile";
 import { downloadVCard } from "@/lib/vcard";
+import { applyTheme, applyPersistedTheme } from "@/lib/themes";
 
 const SOCIAL_ICONS: Record<string, React.ElementType> = {
   linkedin: Linkedin,
@@ -49,6 +50,14 @@ function MetricBadge({
 
 export function PublicProfileView({ profile }: { profile: PublicProfile }) {
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    applyTheme(profile.theme ?? "obsidian");
+    return () => {
+      // Restore the visitor's own theme when they navigate away
+      applyPersistedTheme();
+    };
+  }, [profile.theme]);
   const profileUrl = `https://tap.shuttlup.com/${profile.username}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&color=F97316&bgcolor=121212&data=${encodeURIComponent(profileUrl)}`;
   const modeMeta = MODE_META[profile.mode as ModeType] ?? MODE_META.personal;

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
-  BarChart3, CreditCard, Home, Layers, Palette,
+  BarChart3, CreditCard, Home, Layers, LogOut, Palette,
   Settings, UserCircle2, Wifi,
 } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase-client";
@@ -22,7 +22,14 @@ const navItems = [
 
 export function DashboardShell({ title, children }: { title: string; children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [publicProfileHref, setPublicProfileHref] = useState<string | null>(null);
+
+  async function handleLogout() {
+    const supabase = getSupabaseBrowserClient();
+    if (supabase) await supabase.auth.signOut();
+    router.push("/auth/sign-in");
+  }
 
   useEffect(() => {
     async function loadPublicProfileHref() {
@@ -119,6 +126,16 @@ export function DashboardShell({ title, children }: { title: string; children: R
                 Public card unavailable
               </span>
             )}
+          </div>
+
+          <div className="mt-2 px-1">
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-xs text-[var(--text-muted)] transition-colors hover:bg-red-500/10 hover:text-red-400"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Sign out
+            </button>
           </div>
         </aside>
 
