@@ -54,14 +54,12 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
-          <a
-            href="/login"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            to="/login"
             className="hidden rounded-full border border-border-muted px-4 py-2 text-sm text-text-secondary transition-all hover:bg-accent-soft hover:text-text-primary lg:inline-flex"
           >
             Login
-          </a>
+          </Link>
           <Link
             to="/tap/demo"
             className="premium-button hidden rounded-full px-5 py-2.5 text-sm lg:inline-flex"
@@ -104,14 +102,12 @@ export function Navbar() {
               ))}
             </div>
             <div className="mt-3 grid gap-2 border-t border-border-muted/80 pt-3">
-              <a
-                href="https://tap.shuttlup.com/"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/login"
                 className="rounded-xl border border-border-muted px-4 py-3 text-center text-sm text-text-secondary transition-all hover:bg-accent-soft hover:text-text-primary"
               >
                 Login
-              </a>
+              </Link>
               <Link to="/tap/demo" className="premium-button rounded-xl px-4 py-3 text-center text-sm">
                 Open NFC Card
               </Link>
